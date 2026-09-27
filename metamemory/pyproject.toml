@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metamemory"
+version = "0.1.0"
+description = "MetaMemory 核心层（开源）：add/search 收发协议本体——框架层与核心层两包同仓（ADR-002）"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = []          # 骨架期零第三方依赖（stdlib only）
+
+[project.optional-dependencies]
+api = ["fastapi>=0.115", "uvicorn>=0.30"]
+full = [
+  "sqlalchemy>=2.0",
+  "alembic",
+  "psycopg[binary]",
+  "pgvector",
+  "jsonpath-ng",
+  "json-logic-py",
+  "litellm",
+]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-name]
+metamemory_framework = "metamemory-framework"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_return_any = true
