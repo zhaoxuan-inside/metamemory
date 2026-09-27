@@ -1,0 +1,15 @@
+{
+  "name": "recompute",
+  "version": 1,
+  "entry": "collect",
+  "deadline_seconds": 600,
+  "nodes": [
+    { "node_id": "collect", "node_type": "step", "step_name": "recompute.collect_stale", "edges": [{ "to": "loop" }] },
+    { "node_id": "loop", "node_type": "loop",
+      "config": { "until": { "==": [{ "var": "$.out.done" }, true] }, "max_iterations": 1000,
+                   "body": ["recompute.recompute_one"] },
+      "edges": [{ "to": "cleanup" }] },
+    { "node_id": "cleanup", "node_type": "step", "step_name": "recompute.clear_stale", "edges": [{ "to": "done" }] },
+    { "node_id": "done", "node_type": "step", "node_class": "terminal" }
+  ]
+}

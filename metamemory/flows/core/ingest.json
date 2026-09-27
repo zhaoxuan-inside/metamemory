@@ -1,0 +1,27 @@
+{
+  "name": "ingest",
+  "version": 1,
+  "entry": "normalize",
+  "deadline_seconds": 300,
+  "nodes": [
+    { "node_id": "normalize", "node_type": "step", "step_name": "ingest.normalize_event", "edges": [{ "to": "segment" }] },
+    { "node_id": "segment", "node_type": "step", "step_name": "ingest.segment_units", "edges": [{ "to": "gate" }] },
+    { "node_id": "gate", "node_type": "step", "step_name": "ingest.pre_gate", "edges": [{ "to": "dedupe" }] },
+    { "node_id": "dedupe", "node_type": "step", "step_name": "ingest.dedupe_route", "edges": [{ "to": "route" }] },
+    { "node_id": "route", "node_type": "switch", "config": { "upstream": "dedupe" }, "edges": [
+      { "to": "select", "when": { "==": [{ "var": "$.out.route" }, "new" ] } },
+      { "to": "done", "when": { "==": [{ "var": "$.out.route" }, "duplicate" ] } },
+      { "to": "review", "default": true }
+    ] },
+    { "node_id": "select", "node_type": "step", "step_name": "ingest.select_worthiness", "edges": [{ "to": "extract" }] },
+    { "node_id": "extract", "node_type": "step", "step_name": "ingest.extract_deep",
+      "config": { "error_policy": {
+        "DependencyError": { "action": "fallback", "to": "ingest.extract_lite@1" },
+        "ContractViolation": { "action": "fallback", "to": "ingest.extract_lite@1" } } },
+      "edges": [{ "to": "score" }] },
+    { "node_id": "score", "node_type": "step", "step_name": "ingest.route_score", "edges": [{ "to": "organize" }] },
+    { "node_id": "organize", "node_type": "step", "step_name": "ingest.organize_links", "edges": [{ "to": "done" }] },
+    { "node_id": "review", "node_type": "step", "node_class": "review", "edges": [{ "to": "done" }] },
+    { "node_id": "done", "node_type": "step", "node_class": "terminal" }
+  ]
+}

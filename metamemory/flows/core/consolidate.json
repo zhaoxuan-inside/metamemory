@@ -1,0 +1,13 @@
+{
+  "name": "consolidate",
+  "version": 1,
+  "entry": "strength",
+  "deadline_seconds": 3600,
+  "nodes": [
+    { "node_id": "strength", "node_type": "step", "step_name": "consolidate.strength_refresh", "edges": [{ "to": "compress" }] },
+    { "node_id": "compress", "node_type": "step", "step_name": "consolidate.compress_fold", "edges": [{ "to": "pattern" }] },
+    { "node_id": "pattern", "node_type": "step", "step_name": "consolidate.pattern_induce", "edges": [{ "to": "cleanup" }] },
+    { "node_id": "cleanup", "node_type": "step", "step_name": "consolidate.graph_cleanup", "edges": [{ "to": "done" }] },
+    { "node_id": "done", "node_type": "step", "node_class": "terminal" }
+  ]
+}
