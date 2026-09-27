@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# 工具缓存
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+
+# 运行时与本地环境
+.env
+*.sqlite3
+*.db
+logs/

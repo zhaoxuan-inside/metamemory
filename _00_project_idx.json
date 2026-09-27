@@ -1,0 +1,325 @@
+{
+  "schema_version": "1.0",
+  "project": {
+    "name": "metamemory",
+    "version": "0.1.0",
+    "description": "AI 时代的记忆中间层：三层两仓（框架层+核心层开源 / 业务层闭源），核心层只做接收信息（add）与查询信息（search）两件事，附带视野裁决/审计/计量横切",
+    "languages": [
+      "Python 3.12"
+    ],
+    "status": "developing",
+    "scale": "personal"
+  },
+  "reading_order": [
+    {
+      "order": 1,
+      "path": "_01_business/",
+      "purpose": "产品底层需求原理"
+    },
+    {
+      "order": 2,
+      "path": "_02_principle/",
+      "purpose": "实现方案底层原理与文档冲突分析"
+    },
+    {
+      "order": 3,
+      "path": "_03_tech_stack/",
+      "purpose": "实现方案技术选型与ADR"
+    },
+    {
+      "order": 4,
+      "path": "_04_framework_design/",
+      "purpose": "项目整体抽象设计"
+    },
+    {
+      "order": 5,
+      "path": "_05_function_design/",
+      "purpose": "分层分模块功能设计（任务卡）"
+    },
+    {
+      "order": 6,
+      "path": "_06_interface_design/",
+      "purpose": "分层分模块接口设计"
+    },
+    {
+      "order": 7,
+      "path": "_07_method_idx.json",
+      "purpose": "方法索引（防重复开发依据）"
+    },
+    {
+      "order": 8,
+      "path": "_09_project_dict.json",
+      "purpose": "项目词典（术语统一，防同义多词）"
+    },
+    {
+      "order": 9,
+      "path": "_10_change_log.json",
+      "purpose": "变更日志（需求/文件清单）"
+    },
+    {
+      "order": 10,
+      "path": "metamemory/",
+      "purpose": "实际代码（最后阅读；src/ 双包 = 框架层+核心层）"
+    }
+  ],
+  "documents": {
+    "_01_business": {
+      "path": "_01_business/",
+      "files": [
+        {
+          "file": "01_requirements.md",
+          "summary": "需求背景/目标/用户故事/业务流程/EARS 验收标准（自 business/02_产品设计 等重排）",
+          "status": "confirmed"
+        },
+        {
+          "file": "02_domain_concepts.md",
+          "summary": "领域概念表（域/视野六档/授权三元组/原子/边/意图…，_09 词条来源）",
+          "status": "confirmed"
+        }
+      ]
+    },
+    "_02_principle": {
+      "path": "_02_principle/",
+      "files": [
+        {
+          "file": "01_candidates.md",
+          "summary": "候选方案原理级对比（双时态/图扩散/五路检索/推理阶梯/任务式受理，自 business/01_设计原理 重排）",
+          "status": "confirmed"
+        },
+        {
+          "file": "02_conflict_analysis.md",
+          "summary": "全文档族冲突分析：C-A~C-H 八项冲突、裁决与处置（本次重排新增）",
+          "status": "confirmed"
+        }
+      ]
+    },
+    "_03_tech_stack": {
+      "path": "_03_tech_stack/",
+      "files": [
+        {
+          "file": "01_selection.md",
+          "summary": "选型清单与依赖版本约束（自 核心层技术选型/框架详细设计 重排，含文档族 ADR 继承索引）",
+          "status": "confirmed"
+        },
+        {
+          "file": "ADR-001-unified-five-segment-signature.md",
+          "summary": "统一五段签名：evolution 入列、tenant 入 context（SOP 优先裁决）",
+          "status": "accepted"
+        },
+        {
+          "file": "ADR-002-three-layer-two-repo.md",
+          "summary": "三层两仓开源边界（框架+核心同仓两包，业务层独立闭源仓）",
+          "status": "accepted"
+        },
+        {
+          "file": "ADR-003-abstain-first-class.md",
+          "summary": "abstain 为一等处置原语（四态路由 + 图编译禁静默兜底）",
+          "status": "accepted"
+        },
+        {
+          "file": "ADR-004-store-slots-degradation.md",
+          "summary": "Store 接口族 9 槽位 + 部署档位 + 允许缺失降级",
+          "status": "accepted"
+        },
+        {
+          "file": "ADR-005-data-contract-jsonpath.md",
+          "summary": "数据契约：版本化 JSON 文档 + JSONPath 映射 + 合同测试",
+          "status": "accepted"
+        }
+      ]
+    },
+    "_04_framework_design": {
+      "path": "_04_framework_design/",
+      "files": [
+        {
+          "file": "01_architecture.md",
+          "summary": "三层两仓分层架构图/模块职责表/依赖规则/公共机制",
+          "status": "confirmed"
+        },
+        {
+          "file": "02_data_flow.md",
+          "summary": "ingest 主调用链/数据模型概览/双指标治理/容量假设",
+          "status": "confirmed"
+        }
+      ]
+    },
+    "_05_function_design": {
+      "path": "_05_function_design/",
+      "files": [
+        {
+          "file": "01_function_matrix.md",
+          "summary": "模块×层功能矩阵 + S0 骨架任务卡 T-001~T-024 + 里程碑 M1-M4 / 切片 S0-S3",
+          "status": "confirmed"
+        }
+      ]
+    },
+    "_06_interface_design": {
+      "path": "_06_interface_design/",
+      "files": [
+        {
+          "file": "01_external_api.md",
+          "summary": "对外 API：add/search/context/manage 四动词 + 错误码 + 202 受理语义 + MCP 面 + key 即查询者",
+          "status": "confirmed"
+        },
+        {
+          "file": "02_internal_interfaces.md",
+          "summary": "内部接口：五段签名清单/支撑类型/VisionArbiter 契约/数据模型 DDL/接口演进规则",
+          "status": "confirmed"
+        }
+      ]
+    }
+  },
+  "tech_stack": {
+    "runtime": "Python 3.12（骨架期标准库零依赖，全量依赖见 _03）",
+    "languages": [
+      "Python 3.12"
+    ],
+    "key_dependencies": [
+      {
+        "name": "FastAPI",
+        "purpose": "api 单元（受理/读路径，可选安装）"
+      },
+      {
+        "name": "SQLAlchemy 2.0 + Alembic",
+        "purpose": "ORM/迁移（full 档）"
+      },
+      {
+        "name": "PostgreSQL 16 / SQLite",
+        "purpose": "DataStore 双实现（full/lite 档）"
+      },
+      {
+        "name": "pgvector / sqlite-vec",
+        "purpose": "VectorStore"
+      },
+      {
+        "name": "LiteLLM Proxy",
+        "purpose": "GatewayProvider（模型无关）"
+      },
+      {
+        "name": "json-logic-py / jsonpath-ng",
+        "purpose": "规则求值 / 契约映射（骨架内置简化实现）"
+      }
+    ],
+    "decisions_dir": "_03_tech_stack/"
+  },
+  "code": {
+    "path": "metamemory/",
+    "layout": "src 布局双包：src/metamemory_framework（框架层，零业务）+ src/metamemory（核心层：protocol/ingest/query/domain）；flows/ 流程 YAML；contracts/ 契约；api/ REST+MCP+SSE；data/ DDL；bootstrap.py 组合根",
+    "entry_points": [
+      "metamemory/bootstrap.py",
+      "metamemory/api/app.py"
+    ],
+    "modules": [
+      {
+        "name": "framework-container",
+        "path": "metamemory/src/metamemory_framework/container",
+        "summary": "五段签名装饰器/AOP 计时/五段执行 runner/异常策略引擎（abstain 一等）",
+        "owner": ""
+      },
+      {
+        "name": "framework-contract",
+        "path": "metamemory/src/metamemory_framework/contract",
+        "summary": "数据契约：提取/拍平映射与字段断言",
+        "owner": ""
+      },
+      {
+        "name": "framework-engine",
+        "path": "metamemory/src/metamemory_framework/engine",
+        "summary": "流程图模型/编译期五关校验/lite 内嵌执行器",
+        "owner": ""
+      },
+      {
+        "name": "framework-stores",
+        "path": "metamemory/src/metamemory_framework/stores",
+        "summary": "Store 接口族 9 槽位 Protocol + 内存降级实现",
+        "owner": ""
+      },
+      {
+        "name": "framework-platform",
+        "path": "metamemory/src/metamemory_framework/{adapters,security,registry,observe}",
+        "summary": "推理双通道/租户上下文/步骤注册表/观测门面",
+        "owner": ""
+      },
+      {
+        "name": "core-protocol",
+        "path": "metamemory/src/metamemory/protocol",
+        "summary": "Memory API 门面（add/search）+ VisionArbiter + 授权三元组 + 计量横切",
+        "owner": ""
+      },
+      {
+        "name": "core-ingest",
+        "path": "metamemory/src/metamemory/ingest",
+        "summary": "接收管道容器：accept/normalize/segment/gate/dedupe/select/extract/anchor/verify/score/organize",
+        "owner": ""
+      },
+      {
+        "name": "core-query",
+        "path": "metamemory/src/metamemory/query",
+        "summary": "查询读路径：五路召回骨架/RRF 融合/预算组装 express",
+        "owner": ""
+      },
+      {
+        "name": "core-domain",
+        "path": "metamemory/src/metamemory/domain",
+        "summary": "领域数据模型（双时态原子/原文情境/八类边/意图）",
+        "owner": ""
+      },
+      {
+        "name": "app-api",
+        "path": "metamemory/api",
+        "summary": "REST 受理面（202+task_id）/读路径/MCP 骨架（豁免五段签名）",
+        "owner": ""
+      }
+    ]
+  },
+  "method_index": {
+    "path": "_07_method_idx.json",
+    "stats": {
+      "total": 29,
+      "by_category": {
+        "algorithm": 4,
+        "orchestration": 9,
+        "data": 16
+      }
+    }
+  },
+  "dictionary": {
+    "path": "_09_project_dict.json",
+    "terms": 37
+  },
+  "change_log": {
+    "path": "_10_change_log.json",
+    "latest": "chg-001"
+  },
+  "quality_gates": {
+    "lint": "ruff check metamemory/src metamemory/tests",
+    "typecheck": "mypy metamemory/src",
+    "test": "python3 -m unittest discover -s metamemory/tests -t metamemory/tests",
+    "coverage_threshold": 80,
+    "observation_overhead_max": null
+  },
+  "conventions": {
+    "method_signature": "boolean method_name(input, output, context, metrics, evolution)",
+    "method_line_limit": "<=30",
+    "commit_format": "<type>(<scope>): <subject>",
+    "method_categories": [
+      "algorithm",
+      "orchestration",
+      "data"
+    ],
+    "signature_exemptions": [
+      "api/ REST handler（FastAPI 路由函数）",
+      "bootstrap.py 组合根 main",
+      "cli 入口",
+      "Protocol 类与 dataclass/pydantic 模型定义",
+      "测试函数",
+      "Metric 门面与 TenantCtx 的构造器"
+    ],
+    "embedding_model": null,
+    "standards": [
+      "PEP 8 + Google Python Style（类型注解必备）"
+    ],
+    "reference": "hs-project-skill references/coding-standards.md",
+    "example": "hs-project-skill references/example.md"
+  }
+}
