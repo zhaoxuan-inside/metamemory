@@ -59,7 +59,7 @@ graph TB
 
 | 模块 | 层 | 职责 | 对应 _01 需求 | 对外暴露（见 _06） |
 |---|---|---|---|---|
-| framework.container | 框架 | 五段签名装饰器、AOP 进出入计时、五段执行 runner、异常策略引擎（abstain 一等） | 全部（运行时底座） | unified_method、run_step、PolicyEngine |
+| framework.container | 框架 | 六段签名装饰器、AOP 进出入计时、容器五段执行 runner、异常策略引擎（abstain 一等） | 全部（运行时底座） | unified_method、run_step、PolicyEngine |
 | framework.contract | 框架 | JSONPath 提取/拍平、字段断言（confidence 软信号契约） | 全部（模块解耦） | extract_by_mappings、flatten_by_mappings、assert_fields |
 | framework.engine | 框架 | 流程图模型与编译校验（六型节点/五关）、lite 内嵌执行器 | US-1（管道） | validate_graph、GraphExecutor |
 | framework.stores | 框架 | Store 9 槽位 Protocol + 内存降级实现 | US-8（lite 全闭环） | 9 个 Protocol + fallbacks |
@@ -69,7 +69,7 @@ graph TB
 | core.ingest | 核心 | 接收管道容器族（快通道/切分/门禁/查重/选取/提取/锚定/校验/四态/建网） | US-1/7 | 管道步骤注册名（ingest.*） |
 | core.query | 核心 | 五路召回骨架、RRF 融合、rerank 降档、预算组装 express、精确验证模式 | US-1/2 | query.recall/express |
 | core.domain | 核心 | 双时态原子/原文情境/segments/八类边/意图字段数据模型 | 全部 | dataclass/pydantic 模型 |
-| api | 应用 | REST 受理（202+task_id+SSE 订阅）、读路径挂载、MCP 骨架（豁免五段签名） | US-1/4 | HTTP/MCP 契约 |
+| api | 应用 | REST 受理（202+task_id+SSE 订阅）、读路径挂载、MCP 骨架（豁免六段签名） | US-1/4 | HTTP/MCP 契约 |
 | 业务层 x（另行立项） | 业务 | 只经 add/search 门面消费；行为以记忆事件回流 | US-2/3/6 | 不在本仓 |
 
 **框架职责封闭集合（A13 九项 + 安全基线第 10 项）**：注册组件容器/编排组件容器/接收请求作为任务/管理任务执行环境/重启节点任务不中断/流程监控/组件容器升级/组件配置/组件编排配置/安全基线（DEK/KEK 密钥两层+轮转、审计自身治理、备份演练）。**负空间**：不含业务语义/同步读路径业务逻辑/数据建模/权限裁决/外部组件直连。
@@ -88,7 +88,7 @@ graph TB
 | 配置 | pydantic-settings（骨架期 dataclass+env） | 档位 profile：full/lite/minimal |
 | 日志 | Metrics 门面统一收集（分级+结构化字段），业务禁 console/print | 进出入日志由 unified_method 自动写 |
 | 异常 | 错误类型×处置策略表（策略即数据）+ 错误码体系（见 _06/01 §4） | Undecidable→abstain；兜底→死信+告警 |
-| 追踪 | OTel：task_id 根 span、节点为 span 链；五段签名的 metrics/evolution 为落地点 | 业务零打点代码 |
+| 追踪 | OTel：task_id 根 span、节点为 span 链；六段签名的 metrics/evolution 为落地点 | 业务零打点代码 |
 | 事务 | 入队与业务写入同事务（Outbox 免除）；节点完成=原子提交（输出+状态推进+后继激活） | PG SKIP LOCKED；lite 档 CAS |
 | 密钥 | DEK/KEK 两层，key_version 轮转，惰性重加密 | 敏感字段 AES-GCM |
 | 审计 | append-only 月分区 + prev_hash 链式防篡改；审计访问写二级流 | 全量不采样 |

@@ -7,7 +7,7 @@
 
 | 模块 \ 层 | app（编排/入口） | domain（data） | common（algorithm） | infra |
 |---|---|---|---|---|
-| framework.container | run_step（五段执行编排） | resolve_policy（策略路由） | — | unified_method AOP 包装 |
+| framework.container | run_step（容器五段执行编排） | resolve_policy（策略路由） | — | unified_method AOP 包装 |
 | framework.contract | — | extract_by_mappings / flatten_by_mappings / assert_fields | — | — |
 | framework.engine | validate_graph / GraphExecutor.run | check_no_silent_default | detect_cycle | — |
 | framework.stores | — | — | cosine_top_k | 内存 Cache/Vector/Queue/Lock/PubSub 实现 |
@@ -17,13 +17,13 @@
 | core.ingest | ingest 流程步骤编排（extract_deep） | fastpath_store / normalize_event / segment_units / pre_gate / dedupe_route / select_worthiness / verify_entailment / route_score | anchor_span | — |
 | core.query | query.recall | merge_candidates | rrf_fuse / budget_pack | — |
 | core.domain | — | 模型定义（豁免：dataclass） | — | — |
-| api | REST handler（豁免五段） | — | — | — |
+| api | REST handler（豁免六段签名） | — | — | — |
 
 每个功能点可追溯到 _01 用户故事：US-1（接收/查询管道）、US-4（四动词协议面）、US-5/6（裁决与目的闸）、US-7（审计计量）、US-8（lite 档降级）。
 
 ## 2. 任务卡（S0 骨架，编号即 P7 执行顺序）
 
-### T-001 五段支撑类型（US-1）
+### T-001 六段支撑类型（US-1）
 
 | 字段 | 内容 |
 |---|---|
@@ -37,7 +37,7 @@
 | 字段 | 内容 |
 |---|---|
 | 涉及文件 | `container/signature.py`、`registry/registry.py`、`observe/metrics.py` |
-| 产出 | boolean 五段方法注册 + 进出入计时/日志自动写 metrics（业务零埋点） |
+| 产出 | boolean 六段方法注册 + 进出入计时/日志自动写 metrics（业务零埋点） |
 | 验收方式 | test_container.py::test_unified_method_aop |
 | 依赖 | T-001 | 预估 5min |
 
@@ -220,6 +220,51 @@
 | 产出 | 方法/词条/变更全量登记，stats 同步 |
 | 验收方式 | JSON 可解析 + 与代码对照 |
 | 依赖 | T-021 | 预估 5min |
+
+### T-023 调用缓存 llm_calls 幂等重放·lite 版（M1，US-1，已完成 2026-09-27）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `metamemory/src/metamemory_framework/recovery/cache.py`、`src/metamemory/ingest/extract.py`（_complete_cached 接入）、`bootstrap.py` |
+| 产出 | CallCache（键 = node_id+input_hash+prompt_version，命中回填不重复付费）；extract_deep 经缓存调用推理 |
+| 验收方式 | test_cache.py（同输入二次调用 provider 仅 1 次 / 异构输入 miss / prompt 版本隔离 / 无缓存直连） |
+| 依赖 | T-014 | 预估 5min |
+
+### T-024 租约 + SKIP LOCKED 派发·full 档（M1）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `data/framework_tables.sql`（task_steps 租约列已定）；新增 `src/metamemory_framework/queue/dispatch.py` |
+| 产出 | PG SKIP LOCKED 就绪派发 SQL + worker 心跳续租（30s/90s）+ 过期重派；run_flow 签名不变 |
+| 验收方式 | 并发双 worker 同节点无双持（集成测试） |
+| 依赖 | T-007 | 预估 5min/步 |
+
+### T-025 llm_calls 表持久化（M1）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `data/framework_tables.sql`（llm_calls 已定）；CallCache 增 PG 后端 |
+| 产出 | 缓存落 llm_calls 表（UNIQUE(node_id, input_hash, prompt_version)），lite/PG 双实现同接口 |
+| 验收方式 | 崩溃重放：重启后同键命中 |
+| 依赖 | T-023 | 预估 5min |
+
+### T-026 三层通知（M1）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | 新增 `src/metamemory_framework/notify/`（advance/progress/webhook） |
+| 产出 | 推进（pg_notify+扫描兜底）/进度（pub/sub→SSE Hub）/回调（Webhook 签名+重试队列） |
+| 验收方式 | 子节点完成→父推进同事务；Webhook at-least-once |
+| 依赖 | T-024 | 预估 5min/通道 |
+
+### T-027 观测全指标 + abstain/default 告警（M1）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `src/metamemory_framework/observe/metrics.py` 扩展 |
+| 产出 | fw_step_duration/errors/retry/dead_letter/**abstain**/**default_path**/queue_depth/task_e2e/cost 全指标 + OTel span 挂载 |
+| 验收方式 | 弃权率突升与 default 命中告警演练（框架 LLD §十） |
+| 依赖 | T-005 | 预估 5min |
 
 ## 3. 里程碑
 

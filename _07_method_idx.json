@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-09-27T03:22:42+00:00",
+  "updated_at": "2026-09-30T00:37:15+00:00",
   "methods": [
     {
       "id": "m-001",
-      "signature": "boolean coarse_filter(input, output, context, metrics, evolution)",
+      "signature": "boolean coarse_filter(input, output, context, tenant, metrics, evolution)",
       "name": "coarse_filter",
       "category": "data",
       "layer": "core",
@@ -19,7 +19,7 @@
     },
     {
       "id": "m-002",
-      "signature": "boolean arbiter_decide(input, output, context, metrics, evolution)",
+      "signature": "boolean arbiter_decide(input, output, context, tenant, metrics, evolution)",
       "name": "arbiter_decide",
       "category": "orchestration",
       "layer": "core",
@@ -38,7 +38,7 @@
     },
     {
       "id": "m-003",
-      "signature": "boolean fine_check(input, output, context, metrics, evolution)",
+      "signature": "boolean fine_check(input, output, context, tenant, metrics, evolution)",
       "name": "fine_check",
       "category": "data",
       "layer": "core",
@@ -53,7 +53,7 @@
     },
     {
       "id": "m-004",
-      "signature": "boolean purpose_gate(input, output, context, metrics, evolution)",
+      "signature": "boolean purpose_gate(input, output, context, tenant, metrics, evolution)",
       "name": "purpose_gate",
       "category": "data",
       "layer": "core",
@@ -68,7 +68,7 @@
     },
     {
       "id": "m-005",
-      "signature": "boolean extract_by_mappings(input, output, context, metrics, evolution)",
+      "signature": "boolean extract_by_mappings(input, output, context, tenant, metrics, evolution)",
       "name": "extract_by_mappings",
       "category": "data",
       "layer": "framework",
@@ -83,7 +83,7 @@
     },
     {
       "id": "m-006",
-      "signature": "boolean flatten_by_mappings(input, output, context, metrics, evolution)",
+      "signature": "boolean flatten_by_mappings(input, output, context, tenant, metrics, evolution)",
       "name": "flatten_by_mappings",
       "category": "data",
       "layer": "framework",
@@ -98,7 +98,7 @@
     },
     {
       "id": "m-007",
-      "signature": "boolean check_no_silent_default(input, output, context, metrics, evolution)",
+      "signature": "boolean check_no_silent_default(input, output, context, tenant, metrics, evolution)",
       "name": "check_no_silent_default",
       "category": "data",
       "layer": "framework",
@@ -113,7 +113,7 @@
     },
     {
       "id": "m-008",
-      "signature": "boolean detect_cycle(input, output, context, metrics, evolution)",
+      "signature": "boolean detect_cycle(input, output, context, tenant, metrics, evolution)",
       "name": "detect_cycle",
       "category": "algorithm",
       "layer": "framework",
@@ -128,7 +128,7 @@
     },
     {
       "id": "m-009",
-      "signature": "boolean run_flow(input, output, context, metrics, evolution)",
+      "signature": "boolean run_flow(input, output, context, tenant, metrics, evolution)",
       "name": "run_flow",
       "category": "orchestration",
       "layer": "framework",
@@ -145,7 +145,7 @@
     },
     {
       "id": "m-010",
-      "signature": "boolean validate_graph(input, output, context, metrics, evolution)",
+      "signature": "boolean validate_graph(input, output, context, tenant, metrics, evolution)",
       "name": "validate_graph",
       "category": "orchestration",
       "layer": "framework",
@@ -163,7 +163,7 @@
     },
     {
       "id": "m-011",
-      "signature": "boolean run_step(input, output, context, metrics, evolution)",
+      "signature": "boolean run_step(input, output, context, tenant, metrics, evolution)",
       "name": "run_step",
       "category": "orchestration",
       "layer": "core",
@@ -181,7 +181,7 @@
     },
     {
       "id": "m-012",
-      "signature": "boolean anchor_span(input, output, context, metrics, evolution)",
+      "signature": "boolean anchor_span(input, output, context, tenant, metrics, evolution)",
       "name": "anchor_span",
       "category": "algorithm",
       "layer": "core",
@@ -196,7 +196,7 @@
     },
     {
       "id": "m-013",
-      "signature": "boolean dedupe_route(input, output, context, metrics, evolution)",
+      "signature": "boolean dedupe_route(input, output, context, tenant, metrics, evolution)",
       "name": "dedupe_route",
       "category": "data",
       "layer": "core",
@@ -211,7 +211,7 @@
     },
     {
       "id": "m-014",
-      "signature": "boolean extract_deep(input, output, context, metrics, evolution)",
+      "signature": "boolean extract_deep(input, output, context, tenant, metrics, evolution)",
       "name": "extract_deep",
       "category": "orchestration",
       "layer": "core",
@@ -229,7 +229,7 @@
     },
     {
       "id": "m-015",
-      "signature": "boolean extract_lite(input, output, context, metrics, evolution)",
+      "signature": "boolean extract_lite(input, output, context, tenant, metrics, evolution)",
       "name": "extract_lite",
       "category": "data",
       "layer": "core",
@@ -247,7 +247,7 @@
     },
     {
       "id": "m-016",
-      "signature": "boolean fastpath_store(input, output, context, metrics, evolution)",
+      "signature": "boolean fastpath_store(input, output, context, tenant, metrics, evolution)",
       "name": "fastpath_store",
       "category": "data",
       "layer": "core",
@@ -262,7 +262,7 @@
     },
     {
       "id": "m-017",
-      "signature": "boolean normalize_event(input, output, context, metrics, evolution)",
+      "signature": "boolean normalize_event(input, output, context, tenant, metrics, evolution)",
       "name": "normalize_event",
       "category": "data",
       "layer": "core",
@@ -277,7 +277,7 @@
     },
     {
       "id": "m-018",
-      "signature": "boolean organize_links(input, output, context, metrics, evolution)",
+      "signature": "boolean organize_links(input, output, context, tenant, metrics, evolution)",
       "name": "organize_links",
       "category": "orchestration",
       "layer": "core",
@@ -292,7 +292,7 @@
     },
     {
       "id": "m-019",
-      "signature": "boolean pre_gate(input, output, context, metrics, evolution)",
+      "signature": "boolean pre_gate(input, output, context, tenant, metrics, evolution)",
       "name": "pre_gate",
       "category": "data",
       "layer": "core",
@@ -307,7 +307,7 @@
     },
     {
       "id": "m-020",
-      "signature": "boolean route_score(input, output, context, metrics, evolution)",
+      "signature": "boolean route_score(input, output, context, tenant, metrics, evolution)",
       "name": "route_score",
       "category": "data",
       "layer": "core",
@@ -322,7 +322,7 @@
     },
     {
       "id": "m-021",
-      "signature": "boolean segment_units(input, output, context, metrics, evolution)",
+      "signature": "boolean segment_units(input, output, context, tenant, metrics, evolution)",
       "name": "segment_units",
       "category": "data",
       "layer": "core",
@@ -337,7 +337,7 @@
     },
     {
       "id": "m-022",
-      "signature": "boolean select_worthiness(input, output, context, metrics, evolution)",
+      "signature": "boolean select_worthiness(input, output, context, tenant, metrics, evolution)",
       "name": "select_worthiness",
       "category": "data",
       "layer": "core",
@@ -352,7 +352,7 @@
     },
     {
       "id": "m-023",
-      "signature": "boolean verify_entailment(input, output, context, metrics, evolution)",
+      "signature": "boolean verify_entailment(input, output, context, tenant, metrics, evolution)",
       "name": "verify_entailment",
       "category": "data",
       "layer": "core",
@@ -367,7 +367,7 @@
     },
     {
       "id": "m-024",
-      "signature": "boolean protocol_add(input, output, context, metrics, evolution)",
+      "signature": "boolean protocol_add(input, output, context, tenant, metrics, evolution)",
       "name": "protocol_add",
       "category": "orchestration",
       "layer": "core",
@@ -384,7 +384,7 @@
     },
     {
       "id": "m-025",
-      "signature": "boolean protocol_search(input, output, context, metrics, evolution)",
+      "signature": "boolean protocol_search(input, output, context, tenant, metrics, evolution)",
       "name": "protocol_search",
       "category": "orchestration",
       "layer": "core",
@@ -404,7 +404,7 @@
     },
     {
       "id": "m-026",
-      "signature": "boolean budget_pack(input, output, context, metrics, evolution)",
+      "signature": "boolean budget_pack(input, output, context, tenant, metrics, evolution)",
       "name": "budget_pack",
       "category": "algorithm",
       "layer": "core",
@@ -419,7 +419,7 @@
     },
     {
       "id": "m-027",
-      "signature": "boolean merge_candidates(input, output, context, metrics, evolution)",
+      "signature": "boolean merge_candidates(input, output, context, tenant, metrics, evolution)",
       "name": "merge_candidates",
       "category": "data",
       "layer": "core",
@@ -434,7 +434,7 @@
     },
     {
       "id": "m-028",
-      "signature": "boolean query_recall(input, output, context, metrics, evolution)",
+      "signature": "boolean query_recall(input, output, context, tenant, metrics, evolution)",
       "name": "query_recall",
       "category": "orchestration",
       "layer": "core",
@@ -451,7 +451,7 @@
     },
     {
       "id": "m-029",
-      "signature": "boolean rrf_fuse(input, output, context, metrics, evolution)",
+      "signature": "boolean rrf_fuse(input, output, context, tenant, metrics, evolution)",
       "name": "rrf_fuse",
       "category": "algorithm",
       "layer": "core",

@@ -16,7 +16,7 @@ MetaMemory 是 AI 时代的记忆中间层（"所有 AI Agent 的海马体与外
 | `_03_tech_stack/` | 选型清单 + ADR-001~005 |
 | `_04_framework_design/` | 三层两仓架构/模块职责/数据流 |
 | `_05_function_design/` | 功能矩阵 + 任务卡（T-001~T-022）+ 里程碑 |
-| `_06_interface_design/` | 对外 API（add/search/context/manage 四动词）+ 内部五段签名 + DDL |
+| `_06_interface_design/` | 对外 API（add/search/context/manage 四动词）+ 内部六段签名 + DDL |
 | `_07_method_idx.json` | 方法索引（29 个五段方法，防重复开发） |
 | `_09_project_dict.json` | 项目词典（37 词条，一物一名） |
 | `_10_change_log.json` | 变更日志（按需求记账） |
@@ -47,6 +47,6 @@ POST /v1/manage/{action}   correct / visibility / authz / forget（写侧治理�
 
 ## 开发纪律
 
-方法统一五段签名 `boolean method(input, output, context, metrics, evolution)`（ADR-001）；
+方法统一六段签名 `boolean method(input, output, context, tenant, metrics, evolution)`（ADR-001 v2，2026-09-27 用户裁定融合）；
 三分类登记 `_07`；命名查 `_09`；abstain 是一等处置（ADR-003）；外部组件一律经 Store 槽位/防腐层（ADR-004）。
 Agent 禁止 `git push`，推送由人工完成。

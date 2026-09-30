@@ -7,7 +7,7 @@
 
 | # | 领域 | 候选 | 结论 | 关键理由 | 决策出处 / ADR |
 |---|---|---|---|---|---|
-| 1 | 方法签名与运行时 | SOP 五段签名 vs 框架五参全 map | SOP 五段（evolution 入列、tenant 入 context） | 统一形态是 AOP/异常策略/演化回收的前提；tenant 本就以 contextvar 贯穿 | ADR-001 |
+| 1 | 方法签名与运行时 | SOP 五段签名 vs 框架五参全 map | **融合六段**：`boolean m(input, output, context, tenant, metrics, evolution)`（v2 用户裁定） | 统一形态是 AOP/异常策略/演化回收的前提；tenant 主权边界进入方法级契约 | ADR-001 |
 | 2 | 主语言/框架 | Python / Go / Rust | Python 3.12 + FastAPI | AI 生态+迭代速度；Rust 全量替换伤害理解管道迭代（评审已做） | 选型 #1 |
 | 3 | 仓库形态 | 单体 / 三层两仓 | 框架+核心同仓两包开源；业务层独立闭源仓 | 开源边界=产品承诺；import 单向 x→core→framework | ADR-002（A14/ADR 21） |
 | 4 | 关系库 | PG / 专用库组合 / SQLite | PostgreSQL 16（full）｜SQLite（lite）——DataStore 接口双实现 | 一库多能；lite 单文件零成本；RLS 是 full 档能力 | 选型 #2 |
@@ -45,7 +45,7 @@
 
 | ADR | 决策 | 状态 |
 |---|---|---|
-| ADR-001 | 统一五段签名：`boolean method(input, output, context, metrics, evolution)`，tenant 入 context，evolution 对接异常策略引擎 | accepted |
+| ADR-001 | 统一六段签名（v2）：`boolean method(input, output, context, tenant, metrics, evolution)`——tenant 入列 + evolution 对接异常策略引擎 | accepted |
 | ADR-002 | 三层两仓开源边界：框架+核心同仓两包、业务层独立闭源仓，import 单向 | accepted |
 | ADR-003 | abstain 为一等处置原语（四态路由 + 图编译禁静默兜底 + 弃权率监控） | accepted |
 | ADR-004 | Store 接口族 9 槽位 + 部署档位（full/lite/minimal）+ 允许缺失降级 | accepted |

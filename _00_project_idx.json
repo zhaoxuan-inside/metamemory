@@ -102,8 +102,8 @@
           "status": "confirmed"
         },
         {
-          "file": "ADR-001-unified-five-segment-signature.md",
-          "summary": "统一五段签名：evolution 入列、tenant 入 context（SOP 优先裁决）",
+          "file": "ADR-001-unified-signature.md",
+          "summary": "统一六段签名（v2 用户裁定融合）：tenant 入列 + evolution 契约保留",
           "status": "accepted"
         },
         {
@@ -163,7 +163,7 @@
         },
         {
           "file": "02_internal_interfaces.md",
-          "summary": "内部接口：五段签名清单/支撑类型/VisionArbiter 契约/数据模型 DDL/接口演进规则",
+          "summary": "内部接口：六段签名清单/支撑类型/VisionArbiter 契约/数据模型 DDL/接口演进规则",
           "status": "confirmed"
         }
       ]
@@ -213,7 +213,7 @@
       {
         "name": "framework-container",
         "path": "metamemory/src/metamemory_framework/container",
-        "summary": "五段签名装饰器/AOP 计时/五段执行 runner/异常策略引擎（abstain 一等）",
+        "summary": "六段签名装饰器/AOP 计时/容器五段执行 runner/异常策略引擎（abstain 一等）",
         "owner": ""
       },
       {
@@ -267,7 +267,7 @@
       {
         "name": "app-api",
         "path": "metamemory/api",
-        "summary": "REST 受理面（202+task_id）/读路径/MCP 骨架（豁免五段签名）",
+        "summary": "REST 受理面（202+task_id）/读路径/MCP 骨架（豁免六段签名）",
         "owner": ""
       }
     ]
@@ -289,7 +289,7 @@
   },
   "change_log": {
     "path": "_10_change_log.json",
-    "latest": "chg-001"
+    "latest": "chg-002"
   },
   "quality_gates": {
     "lint": "ruff check metamemory/src metamemory/tests",
@@ -299,7 +299,7 @@
     "observation_overhead_max": null
   },
   "conventions": {
-    "method_signature": "boolean method_name(input, output, context, metrics, evolution)",
+    "method_signature": "boolean method_name(input, output, context, tenant, metrics, evolution)",
     "method_line_limit": "<=30",
     "commit_format": "<type>(<scope>): <subject>",
     "method_categories": [
