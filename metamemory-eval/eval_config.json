@@ -1,0 +1,18 @@
+{
+  "active_profile": "skeleton",
+  "_说明": "阈值分档：skeleton=骨架期启发式提取；s1=理解闭环后收紧（忠实率代理≥0.90 对齐技术选型 §2.2 S1 发布门禁）。切换 active_profile 即生效。",
+  "skeleton": {
+    "route_accuracy": 0.55,
+    "abstain_reason_nonempty_rate": 1.0,
+    "recall_at5": 0.6,
+    "no_answer_accuracy": 0.75,
+    "block_rate": 0.9
+  },
+  "s1": {
+    "route_accuracy": 0.9,
+    "abstain_reason_nonempty_rate": 1.0,
+    "recall_at5": 0.8,
+    "no_answer_accuracy": 0.9,
+    "block_rate": 1.0
+  }
+}

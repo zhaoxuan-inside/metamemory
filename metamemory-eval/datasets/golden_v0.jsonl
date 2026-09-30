@@ -1,0 +1,63 @@
+{"id": "G-001", "scenario": "commitment", "expected_route": "extract", "content": "我一定要在周五前把重要方案交给客户", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-002", "scenario": "commitment", "expected_route": "fold", "content": "明天我打算整理一下方案思路", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-003", "scenario": "commitment", "expected_route": "abstain", "content": "我不再承诺把方案交给客户了，取消之前的约定", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-004", "scenario": "travel", "expected_route": "extract", "content": "我必须记住下周三要去北京出差，重要行程", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-005", "scenario": "travel", "expected_route": "fold", "content": "明天我可能去上海看看", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-006", "scenario": "travel", "expected_route": "abstain", "content": "我不再去北京出差了，行程取消", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-007", "scenario": "deadline", "expected_route": "extract", "content": "记住这个关键节点：周五之前必须完成交付", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-008", "scenario": "deadline", "expected_route": "fold", "content": "明天有个截止日期要留意", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-009", "scenario": "deadline", "expected_route": "abstain", "content": "交付 deadline 取消了，不再赶周五", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-010", "scenario": "budget", "expected_route": "extract", "content": "这个季度预算是 250000 元，一定要控制在范围内", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-011", "scenario": "budget", "expected_route": "fold", "content": "设备款明天要付，先记一笔", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-012", "scenario": "budget", "expected_route": "abstain", "content": "预算取消了，不再控制在 250000 元内", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-013", "scenario": "contact", "expected_route": "extract", "content": "客户王总的电话是 13800138000，重要联系人", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-014", "scenario": "contact", "expected_route": "fold", "content": "明天把王总的联系方式发你", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-015", "scenario": "contact", "expected_route": "abstain", "content": "我不再用 13800138000 这个号码了，已更换", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-016", "scenario": "meeting", "expected_route": "extract", "content": "记住周四 14:00 有重要评审会，一定参加", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-017", "scenario": "meeting", "expected_route": "fold", "content": "明天约了个会，细节待定", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-018", "scenario": "meeting", "expected_route": "abstain", "content": "周四的评审会取消了，不再开了", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-019", "scenario": "study", "expected_route": "extract", "content": "我一定要记住在月底前学完记忆话术，这是重要目标", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-020", "scenario": "study", "expected_route": "fold", "content": "明天继续看记忆相关的资料", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-021", "scenario": "study", "expected_route": "abstain", "content": "我不再学吉他了，兴趣取消了", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-022", "scenario": "purchase", "expected_route": "extract", "content": "一定要记住给家里买台 8999 元的笔记本，重要采购", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-023", "scenario": "purchase", "expected_route": "fold", "content": "明天看看笔记本电脑再决定", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-024", "scenario": "purchase", "expected_route": "abstain", "content": "笔记本不买了，采购计划取消", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-025", "scenario": "appointment", "expected_route": "extract", "content": "记住和林老师的约定：周五前定下播客计划，很重要", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-026", "scenario": "appointment", "expected_route": "fold", "content": "明天和林老师聊聊近况", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-027", "scenario": "appointment", "expected_route": "abstain", "content": "和林老师的约定取消了，不再定播客计划", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-028", "scenario": "preference", "expected_route": "extract", "content": "我一定偏好深色主题，记住这点很重要", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-029", "scenario": "preference", "expected_route": "fold", "content": "明天把界面换成简洁的试试", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-030", "scenario": "preference", "expected_route": "abstain", "content": "我不再偏好深色主题了，换成浅色", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-031", "scenario": "work", "expected_route": "extract", "content": "记住这个 Agent 记忆项目是本季度最重要的工作，一定全力推进", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-032", "scenario": "work", "expected_route": "fold", "content": "明天要把新想法落到工作上", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-033", "scenario": "work", "expected_route": "abstain", "content": "记忆项目暂停了，不再推进了", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-034", "scenario": "plan", "expected_route": "extract", "content": "一定记住下个月 1 号要做季度复盘，关键节点", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-035", "scenario": "plan", "expected_route": "fold", "content": "明天找时间做做复盘", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-036", "scenario": "plan", "expected_route": "abstain", "content": "季度复盘取消了，不做了", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-037", "scenario": "health_note", "expected_route": "extract", "content": "记住每天 22:30 前必须睡觉，这是重要的自律约定", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-038", "scenario": "health_note", "expected_route": "fold", "content": "明天开始早点睡", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-039", "scenario": "health_note", "expected_route": "abstain", "content": "早睡约定取消了，不再要求 22:30 前睡", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-040", "scenario": "hobby", "expected_route": "extract", "content": "记住我一定要完成首场播客录制，重要里程碑", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-041", "scenario": "hobby", "expected_route": "fold", "content": "明天和播客伙伴对个进度", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-042", "scenario": "hobby", "expected_route": "abstain", "content": "播客计划取消了，不再录制了", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-043", "scenario": "finance", "expected_route": "extract", "content": "一定要记住房贷还款日是每月 15 号，关键日期", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-044", "scenario": "finance", "expected_route": "fold", "content": "明天去把开销记一笔", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-045", "scenario": "finance", "expected_route": "abstain", "content": "房贷还款日改了，不再是每月 15 号", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-046", "scenario": "team", "expected_route": "extract", "content": "记住新同事小周的入职日是下周二，一定要准备重要事项", "rationale": "高价值断言：承诺/截止/数字/关键联系人——唤起兑现率高"}
+{"id": "G-047", "scenario": "team", "expected_route": "fold", "content": "明天有新人来团队", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-048", "scenario": "team", "expected_route": "abstain", "content": "小周的入职取消了，下周二不用管了", "rationale": "改口/取消与原断言矛盾：NLI contradict → 显式弃权挂人裁（禁默认落置）"}
+{"id": "G-049", "scenario": "greeting", "expected_route": "keep_raw", "content": "哈哈，你好呀", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-050", "scenario": "greeting", "expected_route": "keep_raw", "content": "谢谢啦，再见", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-051", "scenario": "greeting", "expected_route": "keep_raw", "content": "嗯嗯，好的好的", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-052", "scenario": "smalltalk", "expected_route": "keep_raw", "content": "今天路上人真多", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-053", "scenario": "smalltalk", "expected_route": "keep_raw", "content": "这家店的灯挺亮的", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-054", "scenario": "smalltalk", "expected_route": "keep_raw", "content": "随便聊聊，没什么正事", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-055", "scenario": "weather", "expected_route": "keep_raw", "content": "外面下雨了", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-056", "scenario": "weather", "expected_route": "keep_raw", "content": "风挺大的", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-057", "scenario": "weather", "expected_route": "keep_raw", "content": "太阳出来了", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-058", "scenario": "news", "expected_route": "fold", "content": "新闻里说明天有新品发布会", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-059", "scenario": "news", "expected_route": "fold", "content": "听说明天有个行业会议", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-060", "scenario": "news", "expected_route": "keep_raw", "content": "新闻真多啊", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-061", "scenario": "mood", "expected_route": "fold", "content": "今天有点累，明天应该会好", "rationale": "有时效或弱信号但价值不达门槛：进情境容器可全文/语义 grep 捞回"}
+{"id": "G-062", "scenario": "mood", "expected_route": "keep_raw", "content": "还行吧", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}
+{"id": "G-063", "scenario": "mood", "expected_route": "keep_raw", "content": "就那样", "rationale": "寒暄/无断言/过程性内容：反面清单或零信号，留原文托底"}

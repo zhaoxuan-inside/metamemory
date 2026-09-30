@@ -1,0 +1,96 @@
+{
+  "generated_at": "2026-09-30T09:51:17+0800",
+  "profile": null,
+  "golden": {
+    "suite": "golden_route",
+    "total": 63,
+    "hit": 63,
+    "route_accuracy": 1.0,
+    "per_route": {
+      "extract": {
+        "hit": 16,
+        "total": 16,
+        "acc": 1.0
+      },
+      "fold": {
+        "hit": 19,
+        "total": 19,
+        "acc": 1.0
+      },
+      "keep_raw": {
+        "hit": 12,
+        "total": 12,
+        "acc": 1.0
+      },
+      "abstain": {
+        "hit": 16,
+        "total": 16,
+        "acc": 1.0
+      }
+    },
+    "confusion": {
+      "extract": {
+        "extract": 16,
+        "fold": 0,
+        "keep_raw": 0,
+        "abstain": 0
+      },
+      "fold": {
+        "extract": 0,
+        "fold": 19,
+        "keep_raw": 0,
+        "abstain": 0
+      },
+      "keep_raw": {
+        "extract": 0,
+        "fold": 0,
+        "keep_raw": 12,
+        "abstain": 0
+      },
+      "abstain": {
+        "extract": 0,
+        "fold": 0,
+        "keep_raw": 0,
+        "abstain": 16
+      }
+    },
+    "abstain_reason_nonempty_rate": 1.0,
+    "misses_sample": []
+  },
+  "recall": {
+    "suite": "recall_bench",
+    "answered": 32,
+    "no_answer": 8,
+    "recall_at5": 0.9062,
+    "mrr": 0.9062,
+    "no_answer_accuracy": 1.0,
+    "seed_ingest_ok": 32,
+    "storage_completeness_note": "写侧指标（原文层覆盖率）独立于本召回率报告（R3 双指标）",
+    "failures_sample": [
+      {
+        "id": "R-006",
+        "query": "user prefers 深色",
+        "top_contents": []
+      },
+      {
+        "id": "R-017",
+        "query": "user working_on 项目",
+        "top_contents": [
+          "记住认知简报项目是核心功能，一定要优先做，重要"
+        ]
+      },
+      {
+        "id": "R-020",
+        "query": "user mentioned 学习",
+        "top_contents": []
+      }
+    ]
+  },
+  "injection": {
+    "suite": "injection_redteam",
+    "total": 12,
+    "blocked": 12,
+    "block_rate": 1.0,
+    "missed_ids": []
+  }
+}

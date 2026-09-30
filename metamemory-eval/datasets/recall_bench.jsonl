@@ -1,0 +1,40 @@
+{"id": "R-001", "intent": "fact", "query": "user mentioned 播客", "seed": "记住我一定要完成和林老师的播客计划，重要约定", "expect_substr": "播客", "top_k": 5}
+{"id": "R-002", "intent": "fact", "query": "user mentioned 北京", "seed": "我必须记住下周三去北京出差，重要行程", "expect_substr": "北京", "top_k": 5}
+{"id": "R-003", "intent": "fact", "query": "user mentioned 预算", "seed": "这个季度预算 250000 元，一定要控制住", "expect_substr": "250000", "top_k": 5}
+{"id": "R-004", "intent": "fact", "query": "user mentioned 电话", "seed": "王总电话 13800138000，一定要记住这个重要联系人", "expect_substr": "13800138000", "top_k": 5}
+{"id": "R-005", "intent": "fact", "query": "user mentioned 评审", "seed": "记住周四 14:00 的评审会，一定参加", "expect_substr": "评审会", "top_k": 5}
+{"id": "R-006", "intent": "fact", "query": "user prefers 深色", "seed": "我一定偏好深色主题，记住这点很重要", "expect_substr": "深色", "top_k": 5}
+{"id": "R-007", "intent": "fact", "query": "user mentioned 笔记本", "seed": "一定记住买 8999 元的笔记本，重要采购", "expect_substr": "8999", "top_k": 5}
+{"id": "R-008", "intent": "fact", "query": "user mentioned 复盘", "seed": "一定记住下个月 1 号做季度复盘，关键节点", "expect_substr": "复盘", "top_k": 5}
+{"id": "R-009", "intent": "fact", "query": "user mentioned 还款", "seed": "房贷还款日每月 15 号，一定要记住", "expect_substr": "15 号", "top_k": 5}
+{"id": "R-010", "intent": "fact", "query": "user mentioned 入职", "seed": "记住新同事小周下周二入职，重要事项一定要跟", "expect_substr": "小周", "top_k": 5}
+{"id": "R-011", "intent": "timepoint", "query": "user mentioned 周五", "seed": "我一定要在周五前把方案交出去，重要承诺", "expect_substr": "周五", "top_k": 5}
+{"id": "R-012", "intent": "timepoint", "query": "user mentioned 周四", "seed": "记住周四 14:00 重要评审会", "expect_substr": "周四", "top_k": 5}
+{"id": "R-013", "intent": "timepoint", "query": "user mentioned 下周三", "seed": "必须记住下周三去北京，重要行程", "expect_substr": "下周三", "top_k": 5}
+{"id": "R-014", "intent": "timepoint", "query": "user mentioned 下个月", "seed": "下个月 1 号季度复盘，一定记住", "expect_substr": "下个月", "top_k": 5}
+{"id": "R-015", "intent": "timepoint", "query": "user mentioned 每月", "seed": "房贷每月 15 号还款，重要日期", "expect_substr": "每月", "top_k": 5}
+{"id": "R-016", "intent": "timepoint", "query": "user mentioned 月底", "seed": "月底前一定要记住学完记忆专题，重要目标", "expect_substr": "月底", "top_k": 5}
+{"id": "R-017", "intent": "autobiographical", "query": "user working_on 项目", "seed": "记住这个 Agent 记忆项目是本季度最重要的工作，一定全力推进", "expect_substr": "记忆项目", "top_k": 5}
+{"id": "R-018", "intent": "autobiographical", "query": "user mentioned 播客录制", "seed": "记住我一定要完成首场播客录制，重要里程碑", "expect_substr": "播客", "top_k": 5}
+{"id": "R-019", "intent": "autobiographical", "query": "user mentioned 自律", "seed": "每天 22:30 前必须睡觉，重要的自律约定", "expect_substr": "22:30", "top_k": 5}
+{"id": "R-020", "intent": "autobiographical", "query": "user mentioned 学习", "seed": "我一定要记住在月底前学完记忆话术，重要目标", "expect_substr": "记忆话术", "top_k": 5}
+{"id": "R-021", "intent": "fact", "query": "user mentioned 相机", "seed": "一定要记住买 12000 元的相机，重要采购", "expect_substr": "12000", "top_k": 5}
+{"id": "R-022", "intent": "fact", "query": "user mentioned 律师", "seed": "律师张姐的电话 13911112222，重要联系人记住", "expect_substr": "13911112222", "top_k": 5}
+{"id": "R-023", "intent": "fact", "query": "user mentioned 服务器", "seed": "服务器续费 3200 元，一定要记住这笔支出", "expect_substr": "3200", "top_k": 5}
+{"id": "R-024", "intent": "fact", "query": "user mentioned 培训", "seed": "记住周三的新员工培训，我一定要到场，重要安排", "expect_substr": "培训", "top_k": 5}
+{"id": "R-025", "intent": "fact", "query": "user mentioned 合同", "seed": "合同盖章一定要在周五前完成，重要节点", "expect_substr": "合同", "top_k": 5}
+{"id": "R-026", "intent": "fact", "query": "user mentioned 体检", "seed": "记住周五上午的体检预约，一定要出席，重要安排", "expect_substr": "体检", "top_k": 5}
+{"id": "R-027", "intent": "fact", "query": "user mentioned 护照", "seed": "护照到期日是 2027 年 5 月，一定要记住", "expect_substr": "护照", "top_k": 5}
+{"id": "R-028", "intent": "fact", "query": "user mentioned 简报", "seed": "记住认知简报项目是核心功能，一定要优先做，重要", "expect_substr": "认知简报", "top_k": 5}
+{"id": "R-029", "intent": "timepoint", "query": "user mentioned 周末", "seed": "周末一定要带孩子去动物园，记住这个重要承诺", "expect_substr": "周末", "top_k": 5}
+{"id": "R-030", "intent": "timepoint", "query": "user mentioned 今晚", "seed": "今晚 20:00 一定要开家庭会议", "expect_substr": "20:00", "top_k": 5}
+{"id": "R-031", "intent": "autobiographical", "query": "user mentioned 跑步", "seed": "我一定要坚持每天跑步 3 公里，重要目标", "expect_substr": "跑步", "top_k": 5}
+{"id": "R-032", "intent": "autobiographical", "query": "user mentioned 论文", "seed": "我的论文一定要在下季度投稿，记住这个重要的关键计划", "expect_substr": "论文", "top_k": 5}
+{"id": "R-033", "intent": "fact", "query": "量子奶茶店的位置", "expect_no_answer": true}
+{"id": "R-034", "intent": "fact", "query": "南极企鹅的社保号", "expect_no_answer": true}
+{"id": "R-035", "intent": "fact", "query": "用户的三叔的股票代码", "expect_no_answer": true}
+{"id": "R-036", "intent": "timepoint", "query": "月球旅行预订时间", "expect_no_answer": true}
+{"id": "R-037", "intent": "autobiographical", "query": "我小学一年级同桌的宠物名", "expect_no_answer": true}
+{"id": "R-038", "intent": "fact", "query": "火星房价走势", "expect_no_answer": true}
+{"id": "R-039", "intent": "fact", "query": "邻居家的 WiFi 密码", "expect_no_answer": true}
+{"id": "R-040", "intent": "timepoint", "query": "2050 年的星际移民航班", "expect_no_answer": true}
