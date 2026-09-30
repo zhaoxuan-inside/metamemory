@@ -1,7 +1,7 @@
 """T-008/T-009：Store 槽位降级实现、cosine_top_k、推理双通道。"""
 import unittest
 
-from common import stubs
+from common import make_tenant, stubs
 
 from metamemory_framework.adapters.inference import (
     DependencyError,
@@ -57,18 +57,18 @@ class TestInMemoryStores(unittest.TestCase):
 
 class TestCosineTopK(unittest.TestCase):
     def test_ordering_and_k(self):
-        ctx, m, evo = stubs()
+        ctx, tenant, m, evo = stubs()
         out = {}
         ok = cosine_top_k({"query_vec": [1.0, 0.0], "items": {"a": [1.0, 0.0], "b": [0.0, 1.0], "c": [0.5, 0.5]}, "k": 2},
-                          out, ctx, m, evo)
+                          out, ctx, tenant, m, evo)
         self.assertTrue(ok)
         self.assertEqual([h["id"] for h in out["hits"]], ["a", "c"])
 
     def test_zero_vector_safe(self):
-        ctx, m, evo = stubs()
+        ctx, tenant, m, evo = stubs()
         out = {}
         self.assertTrue(cosine_top_k({"query_vec": [0.0, 0.0], "items": {"a": [0.0, 0.0]}, "k": 1},
-                                     out, ctx, m, evo))
+                                     out, ctx, tenant, m, evo))
         self.assertEqual(len(out["hits"]), 1)
 
 

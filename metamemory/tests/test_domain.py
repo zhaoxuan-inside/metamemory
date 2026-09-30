@@ -1,7 +1,7 @@
 """T-010：领域数据模型与双时态仓储（supersedes 关闭不删除）。"""
 import unittest
 
-from common import stubs
+from common import make_tenant, stubs
 
 from metamemory.domain.models import MemoryEntry, MemoryEpisode
 from metamemory.domain.store import MemoryStore

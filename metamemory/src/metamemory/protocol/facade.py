@@ -25,7 +25,7 @@ from .authorization import AuthzRegistry
 
 
 @unified_method("protocol.add", 1, "orchestration")
-def protocol_add(input: dict, output: dict, context, metrics, evolution) -> bool:
+def protocol_add(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-027：接收信息——受理即落袋（快通道）+ ingest 流程任务式受理。"""
     quota = int(context.config.get("max_pending_events", 10_000))
     if metrics.counters.get("add.accepted", 0) >= quota:
@@ -33,7 +33,7 @@ def protocol_add(input: dict, output: dict, context, metrics, evolution) -> bool
         metrics.counter("add.quota_blocked")
         return False
     fastpath: dict = {}
-    if not fastpath_store({"event": input["event"]}, fastpath, context, metrics, evolution):
+    if not fastpath_store({"event": input["event"]}, fastpath, context, tenant, metrics, evolution):
         evolution.push_cause("fastpath_store", evolution)
         return False
     engine = context.deps["engine"]
@@ -51,25 +51,25 @@ def protocol_add(input: dict, output: dict, context, metrics, evolution) -> bool
 
 
 @unified_method("protocol.search", 1, "orchestration")
-def protocol_search(input: dict, output: dict, context, metrics, evolution) -> bool:
+def protocol_search(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-028：查询信息——召回→融合→裁决→组装；结果集由视野铁律决定（ADR 15）。"""
     recall_out: dict = {}
     if not query_recall({"query": input["query"], "episode_ref": input.get("episode_ref")},
-                        recall_out, context, metrics, evolution):
+                        recall_out, context, tenant, metrics, evolution):
         evolution.push_cause("query_recall", evolution)
         return False
     fused: dict = {}
-    rrf_fuse({"ranked_lists": _to_ranked(recall_out["candidates"])}, fused, context, metrics, evolution)
+    rrf_fuse({"ranked_lists": _to_ranked(recall_out["candidates"])}, fused, context, tenant, metrics, evolution)
     order = [item["memory_id"] for item in fused.get("fused", [])]
     by_id = {c["memory_id"]: c for c in recall_out["candidates"]}
     ranked = [_decorate(by_id[i], fused) for i in order if i in by_id]
     arb_out: dict = {}
-    arbiter_decide({"candidates": ranked, "querier": _querier(context),
+    arbiter_decide({"candidates": ranked, "querier": _querier(tenant),
                     "authz": _authz(context), "declared_purpose": input.get("purpose")},
-                   arb_out, context, metrics, evolution)
+                   arb_out, context, tenant, metrics, evolution)
     packed: dict = {}
     budget_pack({"items": arb_out.get("allowed", []), "token_budget": input.get("token_budget", 2048)},
-                packed, context, metrics, evolution)
+                packed, context, tenant, metrics, evolution)
     output["items"] = packed.get("packed", [])
     output["denials"] = arb_out.get("denials", [])
     output["degraded"] = {"rerank": False}
@@ -90,8 +90,7 @@ def _decorate(candidate: dict, fused: dict) -> dict:
     return {**candidate, "fusion_score": scores.get(candidate["memory_id"], 0.0)}
 
 
-def _querier(context) -> dict:
-    tenant = context.tenant
+def _querier(tenant) -> dict:
     return {"tenant_id": tenant.tenant_id, "domain_id": tenant.domain_id, "actor": tenant.actor}
 
 

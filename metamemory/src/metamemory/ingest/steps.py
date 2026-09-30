@@ -21,7 +21,7 @@ EMPHASIS_WORDS = ("一定", "记住", "重要", "必须")
 
 
 @unified_method("ingest.normalize_event", 1, "data")
-def normalize_event(input: dict, output: dict, context, metrics, evolution) -> bool:
+def normalize_event(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-013：事件归一——形态标记、空白清理、时间锚定（四要素齐备）。"""
     event = input["event"]
     content = " ".join(str(event["content"]).split())
@@ -36,7 +36,7 @@ def normalize_event(input: dict, output: dict, context, metrics, evolution) -> b
 
 
 @unified_method("ingest.segment_units", 1, "data")
-def segment_units(input: dict, output: dict, context, metrics, evolution) -> bool:
+def segment_units(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-014：单元切分——统计信号骨架（段落/轮次边界），参数版本可演化。"""
     store: MemoryStore = context.deps["store"]
     content = input["normalized"]["content"]
@@ -57,7 +57,7 @@ def segment_units(input: dict, output: dict, context, metrics, evolution) -> boo
 
 
 @unified_method("ingest.pre_gate", 1, "data")
-def pre_gate(input: dict, output: dict, context, metrics, evolution) -> bool:
+def pre_gate(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-015：安全/PII 门（fail-closed）+ 注入疑标记；输出带 confidence 软信号。"""
     gated = []
     for segment in input["segments"]:
@@ -72,7 +72,7 @@ def pre_gate(input: dict, output: dict, context, metrics, evolution) -> bool:
 
 
 @unified_method("ingest.dedupe_route", 1, "data")
-def dedupe_route(input: dict, output: dict, context, metrics, evolution) -> bool:
+def dedupe_route(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-016：查重短路——同内容 hash 已入库则路由 duplicate（省强模型调用）。"""
     store: MemoryStore = context.deps["store"]
     route = "new"
@@ -86,7 +86,7 @@ def dedupe_route(input: dict, output: dict, context, metrics, evolution) -> bool
 
 
 @unified_method("ingest.select_worthiness", 1, "data")
-def select_worthiness(input: dict, output: dict, context, metrics, evolution) -> bool:
+def select_worthiness(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-017：五维信号骨架 + 反面清单——值得度预判（便宜，全量过）。"""
     selected = []
     for segment in input["gated"]:

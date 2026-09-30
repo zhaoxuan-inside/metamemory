@@ -92,7 +92,7 @@ def main() -> None:
         domain = step_name.split(".")[0]
         methods.append({
             "id": name_to_id[func_name],
-            "signature": f"boolean {func_name}(input, output, context, metrics, evolution)",
+            "signature": f"boolean {func_name}(input, output, context, tenant, metrics, evolution)",
             "name": func_name,
             "category": category,
             "layer": "framework" if domain in ("contract", "container", "engine", "stores") else "core",

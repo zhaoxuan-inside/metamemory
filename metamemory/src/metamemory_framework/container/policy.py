@@ -49,7 +49,7 @@ DEFAULT_POLICY: dict[str, dict[str, Any]] = {
 }
 
 
-def resolve_policy(input: dict, output: dict, context, metrics, evolution) -> bool:
+def resolve_policy(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-004：按错误类型解析处置动作（策略即数据，节点级可覆盖）。"""
     error_type = input["error_type"]
     policy = dict(DEFAULT_POLICY)

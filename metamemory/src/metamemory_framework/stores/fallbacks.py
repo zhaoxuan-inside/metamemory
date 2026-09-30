@@ -52,7 +52,7 @@ class InMemoryVector:
 
     def search(self, ns: str, query: list[float], k: int) -> list[dict]:
         out: dict = {}
-        cosine_top_k({"query_vec": query, "items": self._ns.get(ns, {}), "k": k}, out, None, _Quiet(), _Evo())
+        cosine_top_k({"query_vec": query, "items": self._ns.get(ns, {}), "k": k}, out, None, None, _Quiet(), _Evo())
         return out.get("hits", [])
 
 
@@ -128,7 +128,7 @@ class _Evo:
 
 
 @unified_method("stores.cosine_top_k", 1, "algorithm")
-def cosine_top_k(input: dict, output: dict, context, metrics, evolution) -> bool:
+def cosine_top_k(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-010：余弦相似 top-k（纯计算，可跨项目复用，必须有单测）。"""
     query = input["query_vec"]
     items: dict[str, list[float]] = input["items"]

@@ -56,7 +56,7 @@ def pipeline_from_dict(data: dict) -> Pipeline:
 
 
 @unified_method("engine.detect_cycle", 1, "algorithm")
-def detect_cycle(input: dict, output: dict, context, metrics, evolution) -> bool:
+def detect_cycle(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-006：静态无环检测（循环仅经 loop 节点，DFS 三色标记，纯计算）。"""
     adjacency: dict[str, list[str]] = input["adjacency"]
     color: dict[str, int] = {n: 0 for n in adjacency}
@@ -78,7 +78,7 @@ def detect_cycle(input: dict, output: dict, context, metrics, evolution) -> bool
 
 
 @unified_method("engine.check_no_silent_default", 1, "data")
-def check_no_silent_default(input: dict, output: dict, context, metrics, evolution) -> bool:
+def check_no_silent_default(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-007：default/兜底边目标必须为 review/abstain/dead_letter 类节点。"""
     nodes: dict[str, Node] = input["nodes"]
     violations: list[str] = []
@@ -96,7 +96,7 @@ def check_no_silent_default(input: dict, output: dict, context, metrics, evoluti
 
 
 @unified_method("engine.validate_graph", 1, "orchestration")
-def validate_graph(input: dict, output: dict, context, metrics, evolution) -> bool:
+def validate_graph(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-008：编译期校验汇总（图约束①-⑤），不过则拒绝发布。"""
     pipeline: Pipeline = input["pipeline"]
     errors: list[str] = []
@@ -118,13 +118,13 @@ def validate_graph(input: dict, output: dict, context, metrics, evolution) -> bo
 def _structural_errors(pipeline: Pipeline) -> list[str]:
     adjacency = {nid: [e.to_node for e in n.edges] for nid, n in pipeline.nodes.items()}
     cycle_out: dict = {}
-    detect_cycle({"adjacency": adjacency}, cycle_out, None, _Quiet(), _QuietEvo())
+    detect_cycle({"adjacency": adjacency}, cycle_out, None, None, _Quiet(), _QuietEvo())
     errors: list[str] = []
     if cycle_out.get("has_cycle"):
         errors.append("静态图存在环（循环仅允许经 loop 节点）")
     probe: dict = {"nodes": pipeline.nodes}
     default_out: dict = {}
-    check_no_silent_default(probe, default_out, None, _Quiet(), _QuietEvo())
+    check_no_silent_default(probe, default_out, None, None, _Quiet(), _QuietEvo())
     errors += [f"约束⑤: {v}" for v in default_out.get("violations", [])]
     if pipeline.entry not in pipeline.nodes:
         errors.append(f"入口节点不存在: {pipeline.entry}")

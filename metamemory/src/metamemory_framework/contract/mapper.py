@@ -55,7 +55,7 @@ def _dig(node: object, key: str):
 
 
 @unified_method("contract.extract_by_mappings", 1, "data")
-def extract_by_mappings(input: dict, output: dict, context, metrics, evolution) -> bool:
+def extract_by_mappings(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-001：按输入映射从 source map 抽取字段（required/default/类型断言）。"""
     source = input["source"]
     values: dict = {}
@@ -73,7 +73,7 @@ def extract_by_mappings(input: dict, output: dict, context, metrics, evolution) 
 
 
 @unified_method("contract.flatten_by_mappings", 1, "data")
-def flatten_by_mappings(input: dict, output: dict, context, metrics, evolution) -> bool:
+def flatten_by_mappings(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-002：把操作段返回对象按输出映射拍平，写入 output map。"""
     obj = input["obj"]
     for field, spec in (input.get("mappings") or {}).items():

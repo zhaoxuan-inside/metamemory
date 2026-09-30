@@ -24,7 +24,7 @@ def _candidate(entry: MemoryEntry, score: float) -> dict:
 
 
 @unified_method("query.merge_candidates", 1, "data")
-def merge_candidates(input: dict, output: dict, context, metrics, evolution) -> bool:
+def merge_candidates(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-029：合并各路候选并去重，保留首次出现路径与最好分。"""
     paths: dict[str, list[dict]] = input["paths"]
     merged: dict[str, dict] = {}
@@ -41,7 +41,7 @@ def merge_candidates(input: dict, output: dict, context, metrics, evolution) -> 
 
 
 @unified_method("query.recall", 1, "orchestration")
-def query_recall(input: dict, output: dict, context, metrics, evolution) -> bool:
+def query_recall(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-032：五路并行召回（lite 骨架）→ 候选合并；过滤前不做业务加工。"""
     store: MemoryStore = context.deps["store"]
     tokens = set(input["query"].lower().split())
@@ -53,7 +53,7 @@ def query_recall(input: dict, output: dict, context, metrics, evolution) -> bool
         "context": _context_path(store, input.get("episode_ref")),
     }
     merged: dict = {}
-    merge_candidates({"paths": paths}, merged, context, metrics, evolution)
+    merge_candidates({"paths": paths}, merged, context, tenant, metrics, evolution)
     output["candidates"] = merged.get("candidates", [])
     return True
 

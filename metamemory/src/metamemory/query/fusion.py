@@ -10,7 +10,7 @@ DEFAULT_RRF_K = 60
 
 
 @unified_method("query.rrf_fuse", 1, "algorithm")
-def rrf_fuse(input: dict, output: dict, context, metrics, evolution) -> bool:
+def rrf_fuse(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-030：RRF 融合——按排名 1/(k+rank) 求和，不依赖分数量纲。"""
     ranked_lists: dict[str, list[str]] = input["ranked_lists"]
     k = int(input.get("rrf_k", DEFAULT_RRF_K))

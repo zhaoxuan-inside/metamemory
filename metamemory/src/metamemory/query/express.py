@@ -9,7 +9,7 @@ def _tokens(text: str) -> int:
 
 
 @unified_method("query.budget_pack", 1, "algorithm")
-def budget_pack(input: dict, output: dict, context, metrics, evolution) -> bool:
+def budget_pack(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """预算内贪心装入：融合分×置信×强度 已在外层排序，此处只管预算。"""
     items: list[dict] = input["items"]
     budget = int(input.get("token_budget", 2048))

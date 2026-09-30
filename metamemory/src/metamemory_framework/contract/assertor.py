@@ -6,7 +6,7 @@ from ..container.signature import unified_method
 
 
 @unified_method("contract.assert_fields", 1, "data")
-def assert_fields(input: dict, output: dict, context, metrics, evolution) -> bool:
+def assert_fields(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-003：字段断言（类型/范围/required）；判定型 map 强制 confidence ∈ [0,1]。"""
     target = input["map"]
     violations: list[str] = []

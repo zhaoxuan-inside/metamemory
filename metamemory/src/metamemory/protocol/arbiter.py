@@ -17,7 +17,7 @@ def _denied(candidate: dict, reason: str, denials: list) -> None:
 
 
 @unified_method("arbiter.coarse_filter", 1, "data")
-def coarse_filter(input: dict, output: dict, context, metrics, evolution) -> bool:
+def coarse_filter(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-023：裁决粗筛——同租户全可达；跨租户仅开放档位或持有效授权。"""
     querier = input["querier"]
     authz: AuthzRegistry = input["authz"]
@@ -36,7 +36,7 @@ def coarse_filter(input: dict, output: dict, context, metrics, evolution) -> boo
 
 
 @unified_method("arbiter.fine_check", 1, "data")
-def fine_check(input: dict, output: dict, context, metrics, evolution) -> bool:
+def fine_check(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-024：精裁——撤回/过期拦截、L1 出域拦截、注入疑产物强制 L1。"""
     querier = input["querier"]
     allowed, denials = [], []
@@ -54,7 +54,7 @@ def fine_check(input: dict, output: dict, context, metrics, evolution) -> bool:
 
 
 @unified_method("arbiter.purpose_gate", 1, "data")
-def purpose_gate(input: dict, output: dict, context, metrics, evolution) -> bool:
+def purpose_gate(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-025：公开层目的闸——目的字段是裁决谓词不是记录项（约束 16/G1）。"""
     declared = input.get("declared_purpose")
     allowed, denials = [], []
@@ -73,7 +73,7 @@ def purpose_gate(input: dict, output: dict, context, metrics, evolution) -> bool
 
 
 @unified_method("arbiter.decide", 1, "orchestration")
-def arbiter_decide(input: dict, output: dict, context, metrics, evolution) -> bool:
+def arbiter_decide(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-026：唯一裁决入口（粗筛→精裁→目的闸）；放行结果写审计流。"""
     current: list = input["candidates"]
     denials: list = []
@@ -84,11 +84,11 @@ def arbiter_decide(input: dict, output: dict, context, metrics, evolution) -> bo
     )
     for stage, extra in stages:
         result: dict = {}
-        stage({**input, "candidates": current, **extra}, result, context, metrics, evolution)
+        stage({**input, "candidates": current, **extra}, result, context, tenant, metrics, evolution)
         current = result.get("allowed", [])
         denials += result.get("denials", [])
     metrics.counter("arbiter.allowed", len(current))
     metrics.counter("arbiter.denied", len(denials))
-    trace = context.tenant.trace_id if context.tenant else "n/a"
+    trace = tenant.trace_id if tenant is not None else "n/a"
     output.update({"allowed": current, "denials": denials, "audit_ref": f"audit:{trace}"})
     return True

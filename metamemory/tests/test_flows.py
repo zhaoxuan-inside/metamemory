@@ -3,7 +3,7 @@ import json
 import unittest
 from pathlib import Path
 
-from common import stubs  # noqa: F401  （sys.path 引导副作用：注册核心层步骤）
+from common import make_tenant, stubs  # noqa: F401  （sys.path 引导副作用：注册核心层步骤）
 
 import bootstrap
 from metamemory_framework.engine.graph import validate_graph
@@ -41,11 +41,11 @@ class TestFlows(unittest.TestCase):
     def test_validate_contract_with_assertor(self):
         from metamemory_framework.contract.assertor import assert_fields
 
-        ctx, m, evo = stubs()
+        ctx, tenant, m, evo = stubs()
         out = {}
         ok = assert_fields(input={"map": {"confidence": 0.9}, "judgment": True,
                                   "assertions": CONTRACT["assertions"]},
-                           output=out, context=ctx, metrics=m, evolution=evo)
+                           output=out, context=ctx, tenant=tenant, metrics=m, evolution=evo)
         self.assertTrue(ok)
 
     def test_registry_categories_complete(self):

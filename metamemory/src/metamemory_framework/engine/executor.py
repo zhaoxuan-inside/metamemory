@@ -68,19 +68,19 @@ class GraphExecutor:
         return task_id
 
     @unified_method("engine.run_flow", 1, "orchestration")
-    def run_flow(self, input: dict, output: dict, context, metrics, evolution) -> bool:
+    def run_flow(self, input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
         """I-009：执行任务至终态（lite 内嵌同步版；检查点在 tasks[task_id]）。"""
         task = self.tasks.get(input["task_id"])
         if task is None:
             evolution.fail("TASK_NOT_FOUND", f"任务不存在: {input['task_id']}")
             return False
         task["status"] = "running"
-        self._drive(task, context, metrics, evolution)
+        self._drive(task, context, tenant, metrics, evolution)
         output.update({"task_status": task["status"], "cursor": task["cursor"],
                        "outputs": task["outputs"], "steps": task["steps"]})
         return task["status"] in ("succeeded", "partial")
 
-    def _drive(self, task: dict, context, metrics, evolution) -> None:
+    def _drive(self, task: dict, context, tenant, metrics, evolution) -> None:
         pipeline: Pipeline = task["pipeline"]
         while True:
             ready = [nid for nid, state in task["cursor"].items() if state == "ready"]
@@ -96,7 +96,7 @@ class GraphExecutor:
             node_id = ready[0]
             task["cursor"][node_id] = "running"
             node = pipeline.nodes[node_id]
-            self._execute_node(task, node, context, metrics, evolution)
+            self._execute_node(task, node, context, tenant, metrics, evolution)
 
     def _terminal_reached(self, task: dict, pipeline: Pipeline) -> bool:
         return any(
@@ -104,20 +104,20 @@ class GraphExecutor:
             for nid, state in task["cursor"].items()
         )
 
-    def _execute_node(self, task: dict, node, context, metrics, evolution) -> None:
+    def _execute_node(self, task: dict, node, context, tenant, metrics, evolution) -> None:
         handler = {
             "step": self._run_step_node, "switch": self._run_switch_node,
             "loop": self._run_loop_node, "fork": self._run_fork_node,
             "wait": self._run_wait_node, "subflow": self._run_subflow_node,
         }[node.node_type]
-        handler(task, node, context, metrics, evolution)
+        handler(task, node, context, tenant, metrics, evolution)
 
-    def _run_step_node(self, task: dict, node, context, metrics, evolution) -> bool:
+    def _run_step_node(self, task: dict, node, context, tenant, metrics, evolution) -> bool:
         if node.step_name is None:  # review/terminal 汇聚节点（无业务逻辑）
             out = {"sink": node.node_id, "node_class": node.node_class}
             task["cursor"][node.node_id] = "succeeded"
             task["outputs"][node.node_id] = out
-            return self._advance(task, node, out, context, metrics, evolution)
+            return self._advance(task, node, out, context, tenant, metrics, evolution)
         upstream: dict = {}
         for node_out in task["outputs"].values():
             if isinstance(node_out, dict):
@@ -126,7 +126,7 @@ class GraphExecutor:
                 "input_map": {**task["params"], **upstream}, "contract": node.config.get("contract"),
                 "policy_config": node.config.get("error_policy")}
         out: dict = {}
-        ok = run_step(spec, out, context, metrics, evolution)
+        ok = run_step(spec, out, context, tenant, metrics, evolution)
         if out.get("status") == "abstained":  # 节点级弃权（Undecidable / 全量不可判）
             refs = out.get("review_refs") or [{"reason": out.get("abstain_reason")}]
             for ref in refs:
@@ -140,7 +140,7 @@ class GraphExecutor:
         task["cursor"][node.node_id] = "succeeded" if ok else "failed"
         task["steps"][node.node_id] = out
         task["outputs"][node.node_id] = out
-        return self._advance(task, node, out, context, metrics, evolution)
+        return self._advance(task, node, out, context, tenant, metrics, evolution)
 
     def _advance_on_abstain(self, task: dict, node) -> bool:
         """abstain 后继不激活常规边，只允许汇入 review/abstain/dead_letter 类节点。"""
@@ -150,7 +150,7 @@ class GraphExecutor:
                 task["cursor"][edge.to_node] = "ready"
         return True
 
-    def _advance(self, task: dict, node, out: dict, context, metrics, evolution) -> bool:
+    def _advance(self, task: dict, node, out: dict, context, tenant, metrics, evolution) -> bool:
         task["cursor"][node.node_id] = task["cursor"].get(node.node_id, "running")
         for edge in node.edges:
             if edge.is_default:
@@ -168,65 +168,65 @@ class GraphExecutor:
     def _activated_any(self, task: dict, node) -> bool:
         return any(task["cursor"].get(e.to_node) == "ready" for e in node.edges if not e.is_default)
 
-    def _run_switch_node(self, task: dict, node, context, metrics, evolution) -> bool:
-        self._advance(task, node, task["outputs"].get(_upstream(node), {}), context, metrics, evolution)
+    def _run_switch_node(self, task: dict, node, context, tenant, metrics, evolution) -> bool:
+        self._advance(task, node, task["outputs"].get(_upstream(node), {}), context, tenant, metrics, evolution)
         task["cursor"][node.node_id] = "succeeded"
         return True
 
-    def _run_loop_node(self, task: dict, node, context, metrics, evolution) -> bool:
+    def _run_loop_node(self, task: dict, node, context, tenant, metrics, evolution) -> bool:
         max_iterations = int(node.config.get("max_iterations", 100))
         for iteration in range(max_iterations):
-            body_out = self._run_body(task, node, context, metrics, evolution)
+            body_out = self._run_body(task, node, context, tenant, metrics, evolution)
             if self.logic.evaluate(node.config["until"], {"out": body_out, "params": task["params"]}):
                 break
             task["steps"].setdefault(node.node_id, {"iterations": 0})["iterations"] = iteration + 1
         task["cursor"][node.node_id] = "succeeded"
-        self._advance(task, node, task["steps"].get(node.node_id, {}), context, metrics, evolution)
+        self._advance(task, node, task["steps"].get(node.node_id, {}), context, tenant, metrics, evolution)
         return True
 
-    def _run_body(self, task: dict, node, context, metrics, evolution) -> dict:
+    def _run_body(self, task: dict, node, context, tenant, metrics, evolution) -> dict:
         body = node.config.get("body") or []
         out: dict = {}
         for step_name in body:
             spec = {"step_name": step_name, "input_map": task["params"]}
-            run_step(spec, out, context, metrics, evolution)
+            run_step(spec, out, context, tenant, metrics, evolution)
         return out
 
-    def _run_fork_node(self, task: dict, node, context, metrics, evolution) -> bool:
+    def _run_fork_node(self, task: dict, node, context, tenant, metrics, evolution) -> bool:
         items = node.config.get("from_items") or []
         join_policy = node.config.get("join", "all")
-        results = [self._run_body_one(task, node, item, context, metrics, evolution) for item in items]
+        results = [self._run_body_one(task, node, item, context, tenant, metrics, evolution) for item in items]
         ok = all(results) if join_policy == "all" else any(results)
         task["cursor"][node.node_id] = "succeeded" if ok else "partial"
-        return self._advance(task, node, {"fork_ok": ok, "results": results}, context, metrics, evolution)
+        return self._advance(task, node, {"fork_ok": ok, "results": results}, context, tenant, metrics, evolution)
 
-    def _run_body_one(self, task, node, item, context, metrics, evolution) -> bool:
+    def _run_body_one(self, task, node, item, context, tenant, metrics, evolution) -> bool:
         body = node.config.get("body") or []
         out: dict = {}
         for step_name in body:
             spec = {"step_name": step_name, "input_map": {**task["params"], "item": item}}
-            if not run_step(spec, out, context, metrics, evolution):
+            if not run_step(spec, out, context, tenant, metrics, evolution):
                 return False
         return True
 
-    def _run_wait_node(self, task: dict, node, context, metrics, evolution) -> bool:
+    def _run_wait_node(self, task: dict, node, context, tenant, metrics, evolution) -> bool:
         timeout = node.config.get("timeout_seconds")
         if node.config.get("event_received"):
             task["cursor"][node.node_id] = "succeeded"
-            return self._advance(task, node, {"wait": "received"}, context, metrics, evolution)
+            return self._advance(task, node, {"wait": "received"}, context, tenant, metrics, evolution)
         task["cursor"][node.node_id] = "waiting"
         if timeout is None:
             evolution.fail("WAIT_NO_TIMEOUT", f"{node.node_id}: wait 必有超时（防孤儿）")
         return False
 
-    def _run_subflow_node(self, task: dict, node, context, metrics, evolution) -> bool:
+    def _run_subflow_node(self, task: dict, node, context, tenant, metrics, evolution) -> bool:
         sub: Pipeline = node.config["subflow"]
         sub_task = self.submit(sub, task["params"])
         result: dict = {}
-        ok = self.run_flow({"task_id": sub_task}, result, context, metrics, evolution)
+        ok = self.run_flow({"task_id": sub_task}, result, context, tenant, metrics, evolution)
         task["cursor"][node.node_id] = "succeeded" if ok else "failed"
         task["outputs"][node.node_id] = result
-        return self._advance(task, node, result, context, metrics, evolution)
+        return self._advance(task, node, result, context, tenant, metrics, evolution)
 
 
 def _upstream(node) -> str:

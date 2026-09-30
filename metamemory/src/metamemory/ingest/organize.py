@@ -12,7 +12,7 @@ RECONSOLIDATION_WINDOW_SECONDS = 72 * 3600  # 再巩固窗口（约束 11，默�
 
 
 @unified_method("ingest.organize_links", 1, "orchestration")
-def organize_links(input: dict, output: dict, context, metrics, evolution) -> bool:
+def organize_links(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-022：提取路由原子落库；同实体同谓词走 supersedes（窗口内）；情境/时序建边。"""
     store: MemoryStore = context.deps["store"]
     occurred_at = (input.get("normalized") or {}).get("occurred_at", "")
@@ -20,7 +20,7 @@ def organize_links(input: dict, output: dict, context, metrics, evolution) -> bo
     for route in input.get("routes") or []:
         if route.get("route") != "extract":
             continue
-        entry = _to_entry(store, route, input, context, occurred_at)
+        entry = _to_entry(store, route, input, tenant, occurred_at)
         existing = store.find_entries(subject=entry.subject, predicate=entry.predicate)
         active = [e for e in existing if e.entry_id != entry.entry_id and _supersede_allowed(e)]
         if active:
@@ -34,12 +34,12 @@ def organize_links(input: dict, output: dict, context, metrics, evolution) -> bo
     return True
 
 
-def _to_entry(store: MemoryStore, route: dict, input: dict, context, occurred_at: str) -> MemoryEntry:
+def _to_entry(store: MemoryStore, route: dict, input: dict, tenant, occurred_at: str) -> MemoryEntry:
     suspect = bool(route.get("suspect"))
     confidence = min(route.get("confidence", 0.5), 0.3 if suspect else 1.0)
     return MemoryEntry(
-        entry_id=store.next_id("mem"), tenant_id=context.tenant.tenant_id,
-        domain_id=context.tenant.domain_id, subject=route.get("subject", "user"),
+        entry_id=store.next_id("mem"), tenant_id=tenant.tenant_id,
+        domain_id=tenant.domain_id, subject=route.get("subject", "user"),
         predicate=route.get("predicate", "mentioned"), object_value=route.get("text", ""),
         entry_type=route.get("entry_type", "fact"), valid_from=occurred_at,
         anchor_episode=input.get("episode_id", ""), anchor_span=tuple(route.get("span") or (0, 0)),

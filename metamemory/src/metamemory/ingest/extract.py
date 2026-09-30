@@ -10,50 +10,66 @@ from metamemory_framework.container.signature import unified_method
 
 
 @unified_method("ingest.extract_deep", 1, "orchestration")
-def extract_deep(input: dict, output: dict, context, metrics, evolution) -> bool:
-    """I-018：深提取编排——强模型命题化（推理阶梯末档，DependencyError→降级链）。"""
+def extract_deep(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
+    """I-018：深提取编排——强模型命题化；调用缓存命中直接回填（A7 幂等重放不重复付费）。"""
     provider = context.deps.get("inference")
     if provider is None:
         evolution.fail("PROVIDER_MISSING", "推理双通道未装配")
         return False
     prompt = _build_prompt(input.get("selected") or input.get("segments") or [])
-    response = provider.complete({"prompt": prompt, "prefer": "gateway"})
+    response = _complete_cached(context, metrics, provider, prompt)
     atoms = response.get("atoms")
     if atoms is None:
         raise ContractViolation("extract_response_missing_atoms")
     episode_content = input.get("normalized", {}).get("content", "")
     worthiness_map = {s["text"]: s.get("worthiness", "mid") for s in input.get("selected") or []}
-    candidates = [_enrich(atom, episode_content, worthiness_map) for atom in atoms]
+    candidates = [_enrich(atom, episode_content, worthiness_map, tenant) for atom in atoms]
     output["atom_candidates"] = candidates
     output["candidates"] = candidates
     metrics.counter("extract.candidates", len(candidates))
     return True
 
 
-def _enrich(atom: dict, episode_content: str, worthiness_map: dict) -> dict:
+def _complete_cached(context, metrics, provider, prompt: str) -> dict:
+    """推理调用经 CallCache：键 = (step, input_hash, prompt_version)；未装配缓存时直连。"""
+    cache = context.deps.get("call_cache")
+    if cache is None:
+        return provider.complete({"prompt": prompt, "prefer": "gateway"})
+    input_hash = cache.input_hash(prompt)
+    cached = cache.lookup("ingest.extract_deep", input_hash, "v1")
+    if cached is not None:
+        metrics.counter("llm_cache_hit")
+        return {k: v for k, v in cached.items() if k != "cached_at"}
+    response = provider.complete({"prompt": prompt, "prefer": "gateway"})
+    if "atoms" in response:
+        cache.store("ingest.extract_deep", input_hash, "v1", response)
+    return response
+
+
+def _enrich(atom: dict, episode_content: str, worthiness_map: dict, tenant) -> dict:
     """逐原子补引文锚点与 NLI 判定（锚定/校验算法下沉，提取只做编排）。"""
     anchor: dict = {}
     anchor_span({"quote": atom.get("quote") or atom["text"], "episode_content": episode_content},
-                anchor, None, _Quiet(), _QuietEvo())
+                anchor, None, tenant, _Quiet(), _QuietEvo())
     span_text = ""
     if anchor.get("anchored"):
         span_text = episode_content[anchor["span"][0]:anchor["span"][1]]
     verdict: dict = {}
     verify_entailment({"atom_text": atom["text"], "span_text": span_text},
-                      verdict, None, _Quiet(), _QuietEvo())
+                      verdict, None, tenant, _Quiet(), _QuietEvo())
     worthiness = worthiness_map.get(atom.get("quote") or atom["text"], "mid")
     return {**atom, **anchor, **verdict, "worthiness": worthiness}
 
 
 @unified_method("ingest.extract_lite", 1, "data")
-def extract_lite(input: dict, output: dict, context, metrics, evolution) -> bool:
+def extract_lite(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """降级路径（policy fallback 目标）：规则级命题化 + 同一套锚定/校验，质量降级语义不丢。"""
     episode_content = input.get("normalized", {}).get("content", "")
     worthiness_map = {s["text"]: s.get("worthiness", "mid") for s in input.get("selected") or []}
     atoms = [{"text": s["text"], "subject": "user", "predicate": "mentioned",
               "quote": s["text"], "entry_type": "fact"}
              for s in input.get("selected") or input.get("segments") or []]
-    candidates = [_enrich(atom, episode_content, worthiness_map) for atom in atoms]
+    candidates = [_enrich(atom, episode_content, worthiness_map, tenant) for atom in atoms]
     output["atom_candidates"] = candidates
     output["candidates"] = candidates
     output["degraded"] = True
@@ -61,7 +77,7 @@ def extract_lite(input: dict, output: dict, context, metrics, evolution) -> bool
 
 
 @unified_method("ingest.anchor_span", 1, "algorithm")
-def anchor_span(input: dict, output: dict, context, metrics, evolution) -> bool:
+def anchor_span(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-019：引文锚定——原文 span 定位（纯计算）；找不到是业务结论非异常。"""
     quote = input["quote"]
     content = input["episode_content"]
@@ -76,7 +92,7 @@ def anchor_span(input: dict, output: dict, context, metrics, evolution) -> bool:
 
 
 @unified_method("ingest.verify_entailment", 1, "data")
-def verify_entailment(input: dict, output: dict, context, metrics, evolution) -> bool:
+def verify_entailment(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-020：NLI 忠实校验骨架（三态）：entail / contradict / neutral（边界带）。"""
     atom_text = input["atom_text"].lower()
     span_text = input["span_text"].lower()
@@ -92,7 +108,7 @@ def verify_entailment(input: dict, output: dict, context, metrics, evolution) ->
 
 
 @unified_method("ingest.route_score", 1, "data")
-def route_score(input: dict, output: dict, context, metrics, evolution) -> bool:
+def route_score(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-021：四态路由——提取 / 折叠 / 留原文 / abstain（挂复核带原因码）。"""
     routes, review = [], []
     for candidate in input["candidates"]:

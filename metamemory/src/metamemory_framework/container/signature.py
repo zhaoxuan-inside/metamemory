@@ -1,8 +1,9 @@
-"""unified_method 装饰器：五段签名的 AOP 落地点（ADR-001 / 选型 #7）。
+"""unified_method 装饰器：六段签名的 AOP 落地点（ADR-001 v2 / 选型 #7）。
 
-所有五段方法经此注册：框架在统一入口完成进出入计时与日志收集（系统观测全部
-封装在 metrics，业务方法零埋点）；类型化策略异常（policy.py）原样上抛，由
-容器 runner 的异常策略引擎处置，AOP 只负责记录后重抛。
+统一签名：boolean step(input, output, context, tenant, metrics, evolution)
+——框架层 tenant 入列（用户裁定 2026-09-27）与 SOP evolution 契约融合。
+所有五段/六段方法经此注册：进出入计时与日志收集由框架统一完成（业务零埋点）；
+类型化策略异常（policy.py）原样上抛，由容器 runner 的异常策略引擎处置。
 """
 from __future__ import annotations
 
@@ -16,22 +17,14 @@ F = TypeVar("F", bound=Callable[..., bool])
 
 
 def unified_method(name: str, version: int = 1, category: str = "data") -> Callable[[F], F]:
-    """注册五段步骤：boolean step(input, output, context, metrics, evolution)。"""
+    """注册六段步骤：boolean step(input, output, context, tenant, metrics, evolution)。"""
 
     def decorator(fn: F) -> F:
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
-            if len(args) == 5:  # 函数形态：fn(input, output, context, metrics, evolution)
-                context, metrics, evolution = args[2], args[3], args[4]
-            elif len(args) == 6:  # 绑定方法形态：fn(self, input, output, context, metrics, evolution)
-                context, metrics, evolution = args[3], args[4], args[5]
-            else:  # 关键字调用形态（五段语义不变）
-                context = kwargs.get("context")
-                metrics = kwargs.get("metrics")
-                evolution = kwargs.get("evolution")
+            tenant, metrics, evolution = _segments(args, kwargs)
             metrics.enter(name)
-            trace = getattr(getattr(context, "tenant", None), "trace_id", None)
-            metrics.log("debug", f"{name} enter", {"trace_id": trace})
+            metrics.log("debug", f"{name} enter", {"trace_id": getattr(tenant, "trace_id", None)})
             try:
                 ok = fn(*args, **kwargs)
             except BaseException as exc:
@@ -50,3 +43,16 @@ def unified_method(name: str, version: int = 1, category: str = "data") -> Calla
         return wrapper  # type: ignore[return-value]
 
     return decorator
+
+
+def _segments(args: tuple, kwargs: dict):
+    """从调用形态提取 (tenant, metrics, evolution)。
+
+    函数形态 6 参：(input, output, context, tenant, metrics, evolution)；
+    绑定方法形态 7 参（首参 self）；其余按关键字段取（六段语义不变）。
+    """
+    if len(args) == 6:
+        return args[3], args[4], args[5]
+    if len(args) == 7:
+        return args[4], args[5], args[6]
+    return kwargs.get("tenant"), kwargs.get("metrics"), kwargs.get("evolution")

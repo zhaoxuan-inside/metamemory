@@ -75,7 +75,7 @@ def _call(method, payload: dict, composition: dict, headers_src: dict):
     set_tenant(tenant)
     context = _context(composition, tenant)
     metrics, evolution, output = MetricsImpl(), Evolution(), {}
-    ok = method(payload, output, context, metrics, evolution)
+    ok = method(payload, output, context, tenant, metrics, evolution)
     return (output if ok else {}) | ({} if ok else {"error": evolution.reason_code}), {
         "ok": ok, "reason_code": evolution.reason_code, "reason": evolution.reason,
     }
@@ -87,8 +87,8 @@ def _context(composition: dict, tenant):
     return Context(
         deps={"store": composition["store"], "authz": composition["authz"],
               "engine": composition["engine"], "inference": composition["inference"],
-              "flows": composition["flows"]},
-        config=composition.get("config", {}), tenant=tenant,
+              "call_cache": composition["call_cache"], "flows": composition["flows"]},
+        config=composition.get("config", {}),
     )
 
 

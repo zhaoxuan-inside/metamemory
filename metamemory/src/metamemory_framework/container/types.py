@@ -1,8 +1,9 @@
-"""五段签名支撑类型（ADR-001）。
+"""六段签名支撑类型（ADR-001 v2，用户裁定 2026-09-27 融合框架层 tenant 入列）。
 
-统一签名：boolean method_name(input, output, context, metrics, evolution)
+统一签名：boolean method_name(input, output, context, tenant, metrics, evolution)
 - input 只读；output 由方法填充（业务结果从 output 返回，返回值只表示执行成败）；
-- context 运行环境（tenant 由 TenantCtx 承载，随 contextvar 贯穿）；
+- context 运行环境（会话/配置/依赖句柄/事务）；
+- tenant 数据主权边界（TenantCtx，方法内只读；RLS 会话绑定经 contextvar 由框架入口同步）；
 - metrics 系统观测门面（进出入计时/日志由框架 AOP 自动写，业务只写业务指标）；
 - evolution 反馈与优化（方法结束前必须回填；false 时 reason_code 必填）。
 """
@@ -24,12 +25,11 @@ class TenantCtx:
 
 @dataclass
 class Context:
-    """运行环境（方法内只读）：会话/配置/依赖句柄/事务/租户。"""
+    """运行环境（方法内只读）：会话/配置/依赖句柄/事务；tenant 为独立第四段。"""
 
     session: dict[str, Any] = field(default_factory=dict)
     config: dict[str, Any] = field(default_factory=dict)
     deps: dict[str, Any] = field(default_factory=dict)
-    tenant: TenantCtx | None = None
     tx: Any = None
     locale: dict[str, Any] = field(default_factory=dict)
 

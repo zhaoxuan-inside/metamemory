@@ -10,7 +10,7 @@ from ..domain.store import MemoryStore
 
 
 @unified_method("ingest.fastpath_store", 1, "data")
-def fastpath_store(input: dict, output: dict, context, metrics, evolution) -> bool:
+def fastpath_store(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """受理即落袋：原文片段进情境容器，同事务幂等（source_uri 去重）。"""
     store: MemoryStore = context.deps["store"]
     event = input["event"]
@@ -19,8 +19,8 @@ def fastpath_store(input: dict, output: dict, context, metrics, evolution) -> bo
         output.update({"episode_id": existing, "stored": True, "replayed": True})
         return True
     episode = MemoryEpisode(
-        episode_id=store.next_id("ep"), tenant_id=context.tenant.tenant_id,
-        domain_id=context.tenant.domain_id, source_uri=event["source_uri"],
+        episode_id=store.next_id("ep"), tenant_id=tenant.tenant_id,
+        domain_id=tenant.domain_id, source_uri=event["source_uri"],
         content=event["content"], actor=event["actor"], occurred_at=event["occurred_at"],
         topics=event.get("topics") or [],
     )

@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from metamemory_framework.adapters.inference import InferenceRouter
 from metamemory_framework.engine.executor import GraphExecutor
 from metamemory_framework.engine.graph import pipeline_from_dict, validate_graph
+from metamemory_framework.recovery.cache import CallCache
 from metamemory_framework.registry.registry import REGISTRY
 
 # 注册核心层步骤（import 即注册：unified_method 装饰器副作用）
@@ -44,6 +45,7 @@ def build_composition(profile: str = "lite") -> dict:
         "authz": AuthzRegistry(store),
         "engine": engine,
         "inference": InferenceRouter(),
+        "call_cache": CallCache(),
         "flows": flows,
         "registry": REGISTRY,
         "protocol": {"add": protocol_add, "search": protocol_search},
@@ -57,7 +59,7 @@ def validate_flows(composition: dict) -> dict:
     results = {}
     for name, pipeline in composition["flows"].items():
         out: dict = {}
-        validate_graph({"pipeline": pipeline}, out, None, _Quiet(), _QuietEvo())
+        validate_graph({"pipeline": pipeline}, out, None, None, _Quiet(), _QuietEvo())
         results[name] = out
     return results
 
