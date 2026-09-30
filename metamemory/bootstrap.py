@@ -20,6 +20,7 @@ from metamemory_framework.registry.registry import REGISTRY
 from metamemory.ingest import extract, fastpath, organize, steps  # noqa: F401,E402
 from metamemory.protocol import arbiter, facade  # noqa: F401,E402
 from metamemory.query import express, fusion, recall  # noqa: F401,E402
+from metamemory.config import MetaMemoryConfig, load_config  # noqa: E402
 from metamemory.domain.store import MemoryStore  # noqa: E402
 from metamemory.protocol.authorization import AuthzRegistry  # noqa: E402
 from metamemory.protocol.facade import protocol_add, protocol_search  # noqa: E402
@@ -34,8 +35,11 @@ def load_flows() -> dict:
     return flows
 
 
-def build_composition(profile: str = "lite") -> dict:
-    """装配组合根：lite 档单进程全闭环（US-8）。"""
+def build_composition(profile: str | None = None, config: MetaMemoryConfig | None = None) -> dict:
+    """装配组合根：lite 档单进程全闭环（US-8）；配置默认经 load_config（环境变量可覆盖）。"""
+    cfg = config or load_config()
+    if profile is not None:
+        cfg.profile = profile
     store = MemoryStore()
     flows = load_flows()
     engine = GraphExecutor(REGISTRY)
@@ -49,7 +53,7 @@ def build_composition(profile: str = "lite") -> dict:
         "flows": flows,
         "registry": REGISTRY,
         "protocol": {"add": protocol_add, "search": protocol_search},
-        "config": {"max_pending_events": 10_000},
+        "config": cfg.to_dict(),
     }
     return composition
 

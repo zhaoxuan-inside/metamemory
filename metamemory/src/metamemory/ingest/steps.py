@@ -73,13 +73,14 @@ def pre_gate(input: dict, output: dict, context, tenant, metrics, evolution) -> 
 
 @unified_method("ingest.dedupe_route", 1, "data")
 def dedupe_route(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
-    """I-016：查重短路——同内容 hash 已入库则路由 duplicate（省强模型调用）。"""
+    """I-016：查重短路——同内容 hash 已入库则路由 duplicate（排除本 episode 自身）。"""
     store: MemoryStore = context.deps["store"]
+    episode_id = input.get("episode_id", "")
     route = "new"
     for segment in input["gated"]:
-        digest = _hash(segment["text"])
-        if digest in store.dedupe:
-            route = "duplicate"
+        for prior in store.dedupe.get(_hash(segment["text"]), []):
+            if prior != episode_id:  # 其他 episode 已有同内容 → 重复；自身不算
+                route = "duplicate"
     output["route"] = route
     output["content_hash"] = _hash(input["gated"][0]["text"]) if input["gated"] else ""
     return True

@@ -27,7 +27,8 @@ from .authorization import AuthzRegistry
 @unified_method("protocol.add", 1, "orchestration")
 def protocol_add(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-027：接收信息——受理即落袋（快通道）+ ingest 流程任务式受理。"""
-    quota = int(context.config.get("max_pending_events", 10_000))
+    quota_cfg = context.config.get("quota") or {}
+    quota = int(quota_cfg.get("max_pending_events", context.config.get("max_pending_events", 10_000)))
     if metrics.counters.get("add.accepted", 0) >= quota:
         evolution.fail("QUOTA_EXCEEDED", "写入配额封顶（配额即 COGS 上界）", retryable=True)
         metrics.counter("add.quota_blocked")
@@ -59,7 +60,8 @@ def protocol_search(input: dict, output: dict, context, tenant, metrics, evoluti
         evolution.push_cause("query_recall", evolution)
         return False
     fused: dict = {}
-    rrf_fuse({"ranked_lists": _to_ranked(recall_out["candidates"])}, fused, context, tenant, metrics, evolution)
+    ranked_lists = recall_out.get("paths") or _to_ranked(recall_out["candidates"])
+    rrf_fuse({"ranked_lists": ranked_lists}, fused, context, tenant, metrics, evolution)
     order = [item["memory_id"] for item in fused.get("fused", [])]
     by_id = {c["memory_id"]: c for c in recall_out["candidates"]}
     ranked = [_decorate(by_id[i], fused) for i in order if i in by_id]
@@ -67,8 +69,10 @@ def protocol_search(input: dict, output: dict, context, tenant, metrics, evoluti
     arbiter_decide({"candidates": ranked, "querier": _querier(tenant),
                     "authz": _authz(context), "declared_purpose": input.get("purpose")},
                    arb_out, context, tenant, metrics, evolution)
+    top_k = max(1, min(int(input.get("top_k", 10)), 50))
     packed: dict = {}
-    budget_pack({"items": arb_out.get("allowed", []), "token_budget": input.get("token_budget", 2048)},
+    budget_pack({"items": arb_out.get("allowed", [])[:top_k],
+                 "token_budget": input.get("token_budget", 2048)},
                 packed, context, tenant, metrics, evolution)
     output["items"] = packed.get("packed", [])
     output["denials"] = arb_out.get("denials", [])

@@ -19,7 +19,7 @@ class MemoryStore:
         self.authz: dict[str, AuthorizationRecord] = {}
         self.published: dict[str, PublishedItem] = {}
         self.by_uri: dict[str, str] = {}
-        self.dedupe: dict[str, str] = {}
+        self.dedupe: dict[str, list[str]] = {}
         self.seq = 0
 
     def next_id(self, prefix: str) -> str:
@@ -29,7 +29,7 @@ class MemoryStore:
     def add_episode(self, episode: MemoryEpisode) -> MemoryEpisode:
         self.episodes[episode.episode_id] = episode
         self.by_uri[episode.source_uri] = episode.episode_id
-        self.dedupe[episode.content_hash()] = episode.episode_id  # 查重短路索引
+        self.dedupe.setdefault(episode.content_hash(), []).append(episode.episode_id)  # 查重短路索引
         return episode
 
     def add_segment(self, segment: Segment) -> Segment:

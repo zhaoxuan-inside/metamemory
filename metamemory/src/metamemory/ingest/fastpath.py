@@ -25,7 +25,6 @@ def fastpath_store(input: dict, output: dict, context, tenant, metrics, evolutio
         topics=event.get("topics") or [],
     )
     store.add_episode(episode)
-    store.dedupe[episode.content_hash()] = episode.episode_id
     output.update({"episode_id": episode.episode_id, "stored": True, "replayed": False,
                    "content_hash": episode.content_hash()})
     metrics.counter("fastpath.stored")

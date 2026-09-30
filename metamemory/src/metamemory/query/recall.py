@@ -6,12 +6,30 @@
 """
 from __future__ import annotations
 
+import re
 import time
 
 from metamemory_framework.container.signature import unified_method
 
 from ..domain.models import MemoryEntry
 from ..domain.store import MemoryStore
+
+
+CJK_RUN = re.compile(r"([\u4e00-\u9fa5]+)|([a-z0-9_]+)")
+
+
+def _tokenize(text: str) -> set[str]:
+    """lite 切词：ASCII 词元 + CJK 字符 bigram（zhparser/FTS5 的降级等价物，约束 13 演化位）。"""
+    tokens: set[str] = set()
+    for word in text.lower().split():
+        for cjk, ascii_ in CJK_RUN.findall(word):
+            if cjk:
+                if len(cjk) == 1:
+                    tokens.add(cjk)
+                tokens.update(a + b for a, b in zip(cjk, cjk[1:]))
+            else:
+                tokens.add(ascii_)
+    return tokens
 
 
 def _candidate(entry: MemoryEntry, score: float) -> dict:
@@ -44,26 +62,31 @@ def merge_candidates(input: dict, output: dict, context, tenant, metrics, evolut
 def query_recall(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
     """I-032：五路并行召回（lite 骨架）→ 候选合并；过滤前不做业务加工。"""
     store: MemoryStore = context.deps["store"]
-    tokens = set(input["query"].lower().split())
+    tokens = _tokenize(input["query"].lower())
     paths: dict[str, list[dict]] = {
         "fulltext": _fulltext_path(store, tokens),
         "semantic": _semantic_path(store, tokens),
         "graph": _graph_path(store, tokens),
-        "timeline": _timeline_path(store, input.get("since")),
+        "timeline": _timeline_path(store, tokens, input.get("since")),
         "context": _context_path(store, input.get("episode_ref")),
     }
     merged: dict = {}
     merge_candidates({"paths": paths}, merged, context, tenant, metrics, evolution)
     output["candidates"] = merged.get("candidates", [])
+    output["paths"] = {name: [item["memory_id"] for item in items]  # 各路真排序（RRF 输入）
+                       for name, items in paths.items()}
     return True
 
 
 def _fulltext_path(store: MemoryStore, tokens: set[str]) -> list[dict]:
-    """lite 全文路：词面重叠打分（FullTextStore 接口位，PG FTS/SQLite FTS5 替换）。"""
+    """lite 全文路：内容词面重叠打分（FullTextStore 接口位）。
+
+    只按 object_value（内容）算重叠——subject/predicate 是身份词不是内容信号，
+    计入会让全体条目基线同分、RRF 排序退化（评测黄金集暴露的真实缺陷）。
+    """
     hits = []
     for entry in store.entries.values():
-        text = f"{entry.subject} {entry.predicate} {entry.object_value}".lower()
-        overlap = len(tokens & set(text.split()))
+        overlap = len(tokens & _tokenize(entry.object_value.lower()))
         if overlap:
             hits.append(_candidate(entry, overlap / (len(tokens) or 1)))
     return sorted(hits, key=lambda h: h["score"], reverse=True)
@@ -86,11 +109,16 @@ def _graph_path(store: MemoryStore, tokens: set[str]) -> list[dict]:
     return hits
 
 
-def _timeline_path(store: MemoryStore, since: float | None) -> list[dict]:
+def _timeline_path(store: MemoryStore, tokens: set[str], since: float | None) -> list[dict]:
+    """时间线路：近期记忆 + 最小词面相关（拒答语义：无关查询不得凑数返回）。"""
     cutoff = since if since is not None else time.time() - 86400 * 30
     recent = [e for e in store.entries.values() if e.learned_at >= cutoff]
     recent.sort(key=lambda e: e.learned_at, reverse=True)
-    return [_candidate(e, 0.3) for e in recent[:10]]
+    hits = []
+    for e in recent:
+        if tokens & _tokenize(e.object_value.lower()):
+            hits.append(_candidate(e, 0.3))
+    return hits[:10]
 
 
 def _context_path(store: MemoryStore, episode_ref: str | None) -> list[dict]:
