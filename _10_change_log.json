@@ -202,6 +202,44 @@
       "author": "Agent",
       "verified": true,
       "notes": "六段签名全量迁移（29 方法 + 测试 97 用例全绿，python3 -m unittest discover -s metamemory/tests -t metamemory/tests）；_07 重生成（签名含 tenant 段）；Context 不再承载 tenant（单一事实来源，contextvar 仅服务 RLS）；C-B 宣传页徽标经用户确认改定并回写 business/README 处置表；调用缓存接入 extract_deep（键=node_id+input_hash+prompt_version，命中不重复付费）。"
+    },
+    {
+      "id": "chg-003",
+      "date": "2026-09-27",
+      "requirement": "新增同级评测项目 metamemory-eval（集成测试/黄金集回归/阈值门禁）；同时交付正式配置面（metamemory.config，回答'如何配置/推荐默认配置'）；评测首轮暴露并修复 3 个真实缺陷（单句自查重/身份词污染排序/merge 丢序）",
+      "changed_files": [
+        "metamemory/src/metamemory/config.py",
+        "metamemory/tests/test_config.py",
+        "metamemory/src/metamemory/protocol/facade.py",
+        "metamemory/src/metamemory/domain/store.py",
+        "metamemory/src/metamemory/ingest/fastpath.py",
+        "metamemory/src/metamemory/ingest/steps.py",
+        "metamemory/src/metamemory/query/recall.py",
+        "metamemory/bootstrap.py",
+        "metamemory-eval/README.md",
+        "metamemory-eval/run_eval.py",
+        "metamemory-eval/harness.py",
+        "metamemory-eval/eval_config.json",
+        "metamemory-eval/datasets/gen_starter.py",
+        "metamemory-eval/datasets/golden_v0.jsonl",
+        "metamemory-eval/datasets/recall_bench.jsonl",
+        "metamemory-eval/datasets/injection_redteam.jsonl",
+        "metamemory-eval/reports/last_report.json",
+        "_00_project_idx.json",
+        "_05_function_design/01_function_matrix.md",
+        "_10_change_log.json",
+        "README.md"
+      ],
+      "commits": [],
+      "changed_methods": [
+        "m-016",
+        "m-027",
+        "m-028",
+        "m-032"
+      ],
+      "author": "Agent",
+      "verified": true,
+      "notes": "评测基线（skeleton 档）：路由一致率 100%（合成集局限见 eval README）/ recall@5 90.6% / MRR 0.906 / 拒答正确 100% / 注入拦截 100%，GATE PASS。102 单测全绿。"
     }
   ]
 }

@@ -269,6 +269,12 @@
         "path": "metamemory/api",
         "summary": "REST 受理面（202+task_id）/读路径/MCP 骨架（豁免六段签名）",
         "owner": ""
+      },
+      {
+        "name": "eval-harness",
+        "path": "metamemory-eval/",
+        "summary": "同级评测项目：golden 四态路由/recall 召回与拒答/injection 注入红队三套件 + 阈值门禁（测试工件，豁免 _07）",
+        "owner": ""
       }
     ]
   },
@@ -289,7 +295,7 @@
   },
   "change_log": {
     "path": "_10_change_log.json",
-    "latest": "chg-002"
+    "latest": "chg-003"
   },
   "quality_gates": {
     "lint": "ruff check metamemory/src metamemory/tests",

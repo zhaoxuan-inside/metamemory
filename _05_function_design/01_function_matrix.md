@@ -275,3 +275,31 @@
 | M2 理解闭环（切片 S1） | 强模型提取/NLI/黄金集门禁 | 忠实率 ≥90% 才发；唤起 P99<300ms |
 | M3 信任完整（切片 S2） | RLS/授权全量/意图状态机/血缘回溯 | 裁决器越权用例零放行 |
 | M4 网络+开发者面（切片 S3） | MCP/SDK/L4 发布/计量对账 | 目的闸+Agent 治理基线通过 |
+
+
+### T-028 配置面（2026-09-27 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `metamemory/src/metamemory/config.py`、`tests/test_config.py`、`bootstrap.py` |
+| 产出 | MetaMemoryConfig（profile/quota/recall/memory/governance 五段，默认值全部取自文档族裁定）+ JSON 文件/环境变量装载 |
+| 验收方式 | test_config.py（默认值/往返/档位校验/env 覆盖） |
+| 依赖 | — | 预估 5min |
+
+### T-029 评测项目骨架（2026-09-27 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `metamemory-eval/{README.md,run_eval.py,harness.py,eval_config.json,datasets/*}` |
+| 产出 | 同级评测项目：golden（四态路由 63 条）/recall（40 题含拒答）/injection（12 条）三套件 + 报告 + 阈值门禁 |
+| 验收方式 | `python3 metamemory-eval/run_eval.py --gate` 全 PASS |
+| 依赖 | T-020 | 预估 5min |
+
+### T-030 评测驱动缺陷修复（2026-09-27 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `src/metamemory/ingest/{steps.py,fastpath.py}`、`src/metamemory/domain/store.py`、`src/metamemory/query/recall.py`、`src/metamemory/protocol/facade.py` |
+| 产出 | 修复：①单句内容自查重（dedupe 排除自身 episode，索引改 hash→列表）②身份词污染排序（全文路仅按内容重叠，CJK bigram 切词）③merge 丢各路排序（paths 真排序直供 RRF）④search top_k 契约落地⑤时间线路相关性过滤（拒答语义） |
+| 验收方式 | 102 单测全绿 + eval GATE PASS（recall@5 90.6%，首轮为 0%） |
+| 依赖 | T-029 | 预估 5min |
