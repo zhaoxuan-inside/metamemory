@@ -49,7 +49,7 @@ class TestEpisode(unittest.TestCase):
                            occurred_at="2026-09-27T10:00:00+08:00")
         store.add_episode(ep)
         self.assertEqual(store.by_uri["conv://1"], "ep_1")
-        self.assertEqual(store.dedupe[ep.content_hash()], "ep_1")
+        self.assertEqual(store.dedupe[ep.content_hash()], ["ep_1"])
 
 
 if __name__ == "__main__":
