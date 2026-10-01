@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MetaMemory 管理控制台</title>
+<style>
+  :root{--ink:#1a1d29;--soft:#4b5063;--line:#e6e8f0;--bg:#f6f7fb;--violet:#6c5ce7;--green:#10b981;--amber:#f59e0b;--rose:#f43f5e;--cyan:#00b8d9}
+  *{margin:0;box-sizing:border-box}body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
+  header{background:#0e0f1a;color:#fff;padding:14px 28px;display:flex;align-items:center;gap:16px}
+  header h1{font-size:17px;font-weight:800}.badge{font-size:12px;padding:3px 12px;border-radius:99px;background:rgba(255,255,255,.12)}
+  .badge.ok{background:rgba(16,185,129,.25)}.badge.warn{background:rgba(243,63,94,.3)}
+  nav{display:flex;gap:4px;background:#fff;border-bottom:1px solid var(--line);padding:0 28px}
+  nav button{border:0;background:none;padding:12px 18px;font-size:14px;cursor:pointer;color:var(--soft);border-bottom:2px solid transparent}
+  nav button.on{color:var(--violet);border-color:var(--violet);font-weight:700}
+  main{max-width:1180px;margin:0 auto;padding:24px 28px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .card b{display:block;font-size:26px}.card span{font-size:12px;color:var(--soft)}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px}
+  .panel h3{font-size:14px;margin-bottom:12px;color:var(--soft);letter-spacing:.05em}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--soft);font-weight:600;font-size:12px}
+  .tag{display:inline-block;font-size:11px;padding:2px 9px;border-radius:99px;margin-right:6px}
+  .t-green{background:rgba(16,185,129,.15);color:#0b7c5c}.t-amber{background:rgba(245,158,11,.18);color:#92600a}
+  .t-rose{background:rgba(243,63,94,.15);color:#b23349}.t-gray{background:#eef0f5;color:var(--soft)}
+  .t-violet{background:rgba(108,92,231,.14);color:#5344c9}
+  input,select{border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;width:100%}
+  .row{display:grid;grid-template-columns:180px 1fr;gap:10px;align-items:center;margin-bottom:10px}
+  .row label{font-size:13px;color:var(--soft)}
+  .btn{border:0;border-radius:99px;padding:9px 22px;font-size:13px;font-weight:700;cursor:pointer;background:var(--violet);color:#fff}
+  .btn.ghost{background:#fff;color:var(--violet);border:1px solid var(--violet)}
+  pre{background:#0e0f1a;color:#c8f7e5;padding:14px;border-radius:10px;font-size:12px;overflow:auto;max-height:340px}
+  .node{display:inline-block;font-size:11px;padding:3px 10px;border-radius:6px;margin:3px 4px 3px 0;font-family:monospace}
+  .n-ok{background:rgba(16,185,129,.16);color:#0b7c5c}.n-run{background:rgba(0,184,217,.15);color:#07809a}
+  .n-abs{background:rgba(245,158,11,.2);color:#92600a}.n-fail{background:rgba(243,63,94,.16);color:#b23349}
+  .n-wait{background:#eef0f5;color:var(--soft)}.n-skip{background:#eef0f5;color:var(--soft)}
+  .muted{color:var(--soft);font-size:12px}.item{border-bottom:1px solid var(--line);padding:10px 0}
+  .item .meta{font-size:11px;color:var(--soft);margin-top:3px}
+  .bar{fill:var(--violet)}.bar-label{font-size:10px;fill:var(--soft)}
+  h4{font-size:13px;margin:14px 0 6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>MetaMemory 管理控制台</h1>
+  <span class="badge" id="profile">…</span>
+  <span class="badge" id="inference">…</span>
+</header>
+<nav>
+  <button data-tab="overview" class="on">总览</button>
+  <button data-tab="trace">任务追踪</button>
+  <button data-tab="search">检索验证</button>
+  <button data-tab="config">配置</button>
+  <button data-tab="eval">评测基线</button>
+</nav>
+<main>
+  <section id="tab-overview">
+    <div class="cards" id="kpis"></div>
+    <div class="panel"><h3>指标计数（业务指标由方法经 metrics 写入，计时由框架自动采集）</h3>
+      <svg id="metricsChart" width="100%" height="220" viewBox="0 0 1000 220" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="panel"><h3>已注册步骤（六段签名，name@version）</h3><table id="stepsTable"></table></div>
+  </section>
+  <section id="tab-trace" style="display:none">
+    <div class="panel"><h3>写入一条记忆（受理 → ingest 流程 → 追踪）</h3>
+      <div class="row"><label>记忆内容</label><input id="memContent" placeholder="例：我一定要在周五前完成重要方案"></div>
+      <button class="btn" onclick="addMemory()">受理并执行</button>
+      <pre id="addResult" style="display:none;margin-top:12px"></pre>
+    </div>
+    <div class="panel"><h3>任务列表（点击查看节点级追踪）</h3><table id="tasksTable"></table>
+      <div id="taskDetail" style="margin-top:14px"></div></div>
+    <div class="panel"><h3>复核队列（abstain 挂人裁汇口，禁默认值兜底）</h3><table id="reviewTable"></table></div>
+  </section>
+  <section id="tab-search" style="display:none">
+    <div class="panel"><h3>检索（key 即查询者；结果已过 VisionArbiter 裁决与目的闸）</h3>
+      <div class="row"><label>查询</label><input id="q" value="user mentioned 方案"></div>
+      <div class="row"><label>检索意图</label><select id="intent"><option>fact</option><option>timepoint</option><option>autobiographical</option></select></div>
+      <div class="row"><label>目的（访问 L4/L5 必填）</label><input id="purpose" placeholder="如 job_matching"></div>
+      <button class="btn" onclick="doSearch()">搜索</button>
+      <div id="results" style="margin-top:14px"></div>
+    </div>
+  </section>
+  <section id="tab-config" style="display:none">
+    <div class="panel"><h3>运行时配置（保存即生效：推理网关按新配置重建；持久化到 console_state.json）</h3>
+      <div id="configForm"></div>
+      <button class="btn" onclick="saveConfig()">保存配置</button>
+      <span id="cfgMsg" class="muted" style="margin-left:12px"></span>
+    </div>
+  </section>
+  <section id="tab-eval" style="display:none">
+    <div class="panel"><h3>评测基线（metamemory-eval 最近一次报告）</h3><div id="evalCards" class="cards"></div>
+      <p class="muted">重新评测：python3 metamemory-eval/run_eval.py --gate；阈值分档见 metamemory-eval/eval_config.json（skeleton → s1）。</p>
+    </div>
+  </section>
+</main>
+<script>
+const $=s=>document.querySelector(s);const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let CONFIG=null;
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+  document.querySelectorAll("main section").forEach(s=>s.style.display="none");
+  $("#tab-"+b.dataset.tab).style.display="block";});
+function badge(){const i=document.getElementById("inference");
+  i.textContent=document.getElementById("profile").textContent.indexOf("…")>=0?"…":i.textContent;}
+function renderState(s){
+  $("#profile").textContent="profile: "+s.profile;
+  const inf=$("#inference");inf.textContent="推理网关: "+(s.inference_configured?"已配置":"未配置（深提取将显式失败）");
+  inf.className="badge "+(s.inference_configured?"ok":"warn");
+  $("#kpis").innerHTML=[["原文情境",s.store.episodes],["语义原子",s.store.entries],["关联边",s.store.edges],
+    ["任务",s.tasks.length],["待人裁",s.review_queue.length],["注册步骤",s.steps.length]]
+    .map(([l,v])=>`<div class="card"><b>${v}</b><span>${l}</span></div>`).join("");
+  $("#stepsTable").innerHTML="<tr><th>步骤</th><th>版本</th><th>分类</th></tr>"+
+    s.steps.map(x=>`<tr><td><code>${esc(x.step)}</code></td><td>${x.version}</td><td><span class="tag t-violet">${x.category}</span></td></tr>`).join("");
+  renderChart(s.metrics.counters);
+  renderTasks(s.tasks);renderReview(s.review_queue);renderEval(s.eval);
+  if(CONFIG===null)renderConfig(s.config);
+}
+function renderChart(counters){
+  const entries=Object.entries(counters).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const max=Math.max(1,...entries.map(e=>e[1]));const bw=1000/Math.max(entries.length,1);
+  document.getElementById("metricsChart").innerHTML=entries.map(([k,v],i)=>{
+    const h=Math.max(4,v/max*150),x=i*bw+6;
+    return `<rect class="bar" x="${x}" y="${190-h}" width="${bw-12}" height="${h}" rx="3"></rect>`+
+      `<text class="bar-label" x="${x+(bw-12)/2}" y="${204}" text-anchor="middle">${esc(k.length>16?k.slice(0,15)+"…":k)}</text>`+
+      `<text class="bar-label" x="${x+(bw-12)/2}" y="${184-h}" text-anchor="middle">${v}</text>`;}).join("")
+    ||"<text class='bar-label' x='500' y='110' text-anchor='middle'>暂无指标——去「任务追踪」写入一条记忆</text>";
+}
+function renderTasks(tasks){
+  const st={"succeeded":"t-green","running":"t-gray","waiting":"t-gray","partial":"t-amber","failed":"t-rose","abstained":"t-amber"};
+  $("#tasksTable").innerHTML="<tr><th>task_id</th><th>状态</th><th>节点游标</th></tr>"+
+    (tasks.length?tasks.map(t=>`<tr style="cursor:pointer" onclick="taskDetail('${t.task_id}')">
+      <td><code>${esc(t.task_id)}</code></td><td><span class="tag ${st[t.status]||"t-gray"}">${t.status}</span></td>
+      <td>${Object.entries(t.nodes).map(([n,s])=>`<span class="node n-${s==="succeeded"?"ok":s==="running"?"run":s==="abstained"?"abs":s==="failed"?"fail":"wait"}">${esc(n)}·${s}</span>`).join("")}</td></tr>`).join("")
+    :"<tr><td colspan=3 class='muted'>暂无任务——写入一条记忆试试</td></tr>");
+}
+async function taskDetail(id){
+  const d=await (await fetch("/api/tasks/"+id)).json();
+  $("#taskDetail").innerHTML=`<h4>追踪 ${esc(id)} · 状态 ${esc(d.status)} · 流程 ${esc(d.pipeline||"")}</h4><pre>${esc(JSON.stringify({cursor:d.cursor,outputs:d.outputs,steps:d.steps},null,2))}</pre>`;
+}
+function renderReview(q){
+  $("#reviewTable").innerHTML="<tr><th>节点</th><th>原因码</th></tr>"+
+    (q.length?q.map(r=>`<tr><td><code>${esc(r.task_node||"-")}</code></td><td><span class="tag t-amber">${esc(r.reason||"-")}</span></td></tr>`).join("")
+    :"<tr><td colspan=2 class='muted'>空——自动裁决链无弃权（判不了才会进这里挂人裁）</td></tr>");
+}
+async function addMemory(){
+  const content=$("#memContent").value.trim();if(!content)return alert("请输入内容");
+  const r=await (await fetch("/api/memories",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content})})).json();
+  const box=$("#addResult");box.style.display="block";box.textContent=JSON.stringify(r,null,2);
+  if(r.task_id)setTimeout(()=>taskDetail(r.task_id),300);refresh();
+}
+async function doSearch(){
+  const p=new URLSearchParams({q:$("#q").value,intent:$("#intent").value,purpose:$("#purpose").value});
+  const r=await (await fetch("/api/search?"+p)).json();
+  $("#results").innerHTML=(r.items||[]).length?r.items.map(i=>`<div class="item">
+    <div>${esc(i.content)} <span class="tag ${i.confidence_label==="inferred"||i.source_level==="S2"?"t-amber":"t-green"}">${i.source_level} · 置信 ${i.confidence}</span></div>
+    <div class="meta">融合分 ${i.fusion_score} · 视野 ${i.visibility} · 溯源 episode ${esc(i.anchor_episode||"-")} span [${(i.span||[]).join(",")}]</div></div>`).join("")
+    :`<p class="muted">无结果${r.unanswered?"（不知道就说不知道："+esc(r.unanswered.reason)+"）":""}${(r.denials||[]).length?" · 裁决拦截 "+r.denials.length+" 条":""}</p>`;
+}
+function renderConfig(cfg){
+  CONFIG=cfg;const form=$("#configForm");form.innerHTML="";
+  const walk=(obj,path)=>{for(const[k,v]of Object.entries(obj)){
+    if(typeof v==="object"&&v!==null){const fs=document.createElement("h4");fs.textContent=path+k;form.appendChild(fs);walk(v,path+k+".");}
+    else{const row=document.createElement("div");row.className="row";
+      const ty=(typeof v==="boolean")?`<select data-path="${path+k}"><option ${v?"selected":""}>true</option><option ${!v?"selected":""}>false</option></select>`
+        :`<input data-path="${path+k}" value="${esc(v)}">`;
+      row.innerHTML=`<label>${path+k}</label>${ty}`;form.appendChild(row);}}};
+  walk(cfg,"");}
+async function saveConfig(){
+  const data={};document.querySelectorAll("#configForm [data-path]").forEach(el=>{
+    const path=el.dataset.path.split(".").filter(Boolean);let cur=data;
+    path.forEach((k,i)=>{if(i===path.length-1){cur[k]=el.value==="true"?true:el.value==="false"?false:(isNaN(+el.value)||el.value===""?el.value:+el.value);}else cur=cur[k]=cur[k]||{};});});
+  const r=await (await fetch("/api/config",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)})).json();
+  $("#cfgMsg").textContent="已保存并生效 "+(r.applied?"✓":"✗");CONFIG=r.config;refresh();}
+function renderEval(ev){
+  const box=document.getElementById("evalCards");
+  if(!ev){box.innerHTML="<div class='card'><b>-</b><span>暂无评测报告：python3 metamemory-eval/run_eval.py</span></div>";return;}
+  box.innerHTML=[["四态路由一致率",ev.route_accuracy],["recall@5",ev.recall_at5],["MRR",ev.mrr],
+    ["拒答正确率",ev.no_answer_accuracy],["注入拦截率",ev.injection_block_rate]]
+    .map(([l,v])=>`<div class="card"><b>${v==null?"-":(v<=1?(v*100).toFixed(1)+"%":v)}</b><span>${l}</span></div>`).join("")
+    +`<div class="card"><span>报告时间 ${esc(ev.generated_at||"-")}</span></div>`;}
+async function refresh(){const s=await (await fetch("/api/state")).json();renderState(s);}
+refresh();setInterval(refresh,5000);
+</script>
+</body>
+</html>
