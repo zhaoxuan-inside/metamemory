@@ -23,7 +23,7 @@
 | I-015 | `boolean pre_gate(input, output, context, tenant, metrics, evolution)` | data | core | ingest | T-013 | 安全/PII 门 fail-closed + 软信号 confidence |
 | I-016 | `boolean dedupe_route(input, output, context, tenant, metrics, evolution)` | data | core | ingest | T-013 | 查重短路 → switch 路由 new/duplicate/abstain |
 | I-017 | `boolean select_worthiness(input, output, context, tenant, metrics, evolution)` | data | core | ingest | T-013 | 五维信号+反面清单 → 值得度（四态前置） |
-| I-018 | `boolean extract_deep(input, output, context, tenant, metrics, evolution)` | orchestration | core | ingest | T-014 | 深提取编排：网关失败→DependencyError 降级链 |
+| I-018 | `boolean extract_deep(input, output, context, tenant, metrics, evolution)` | orchestration | core | ingest | T-014 | 强模型命题化（ADR-006 唯一路径；失败→重试/复核，无降级） |
 | I-019 | `boolean anchor_span(input, output, context, tenant, metrics, evolution)` | algorithm | core | ingest | T-014 | 引文锚定（模糊 span 定位，纯计算） |
 | I-020 | `boolean verify_entailment(input, output, context, tenant, metrics, evolution)` | data | core | ingest | T-014 | NLI 忠实校验骨架（entail/contradict/neutral） |
 | I-021 | `boolean route_score(input, output, context, tenant, metrics, evolution)` | data | core | ingest | T-014 | 四态路由：提取/折叠/留原文/**abstain** |
@@ -33,7 +33,7 @@
 | I-025 | `boolean purpose_gate(input, output, context, tenant, metrics, evolution)` | data | core | protocol | T-011 | 公开层目的闸：允许目的集×声明目的 |
 | I-026 | `boolean arbiter_decide(input, output, context, tenant, metrics, evolution)` | orchestration | core | protocol | T-011 | VisionArbiter 唯一裁决入口（粗筛→精裁→目的闸） |
 | I-027 | `boolean protocol_add(input, output, context, tenant, metrics, evolution)` | orchestration | core | protocol | T-012 | add 门面：计量→幂等→快通道→入队 |
-| I-028 | `boolean protocol_search(input, output, context, tenant, metrics, evolution)` | orchestration | core | protocol | T-012 | search 门面：召回→融合→裁决→组装出口 |
+| I-028 | `boolean protocol_search(input, output, context, tenant, metrics, evolution)` | orchestration | core | protocol | T-012 | search 门面：召回→融合→裁决→组装出口；top_k 截断 |
 | I-029 | `boolean merge_candidates(input, output, context, tenant, metrics, evolution)` | data | core | query | T-016 | 五路候选合并去重 |
 | I-030 | `boolean rrf_fuse(input, output, context, tenant, metrics, evolution)` | algorithm | core | query | T-016 | RRF 融合（1/(k+rank)，纯计算） |
 | I-031 | `boolean budget_pack(input, output, context, tenant, metrics, evolution)` | algorithm | core | query | T-016 | Token 预算内择优装入+溯源引用 |

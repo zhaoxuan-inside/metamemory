@@ -22,6 +22,7 @@ MetaMemory 是 AI 时代的记忆中间层（"所有 AI Agent 的海马体与外
 | `_10_change_log.json` | 变更日志（按需求记账） |
 | `metamemory/` | 代码：`src/metamemory_framework`（框架层）+ `src/metamemory`（核心层）+ flows/contracts/api/data/tests |
 | `metamemory-eval/` | 同级评测项目：golden/recall/injection 三套件 + 阈值门禁（`run_eval.py --gate`） |
+| `metamemory_console/` | 同级 Web 管理控制台：可视化配置（推理网关热更新）+ 可视化追踪（任务/节点级状态机、复核队列、指标） |
 | `business/` | 原始文档族 v0.7（本 SOP 结构的素材源，保留追溯） |
 
 ## 快速开始（lite 档骨架，零第三方依赖）
@@ -32,6 +33,9 @@ python3 -m unittest discover -s metamemory/tests -t metamemory/tests
 
 # 效果评测（四态路由/检索召回/注入拦截 + 门禁）
 python3 metamemory-eval/run_eval.py --gate
+
+# Web 管理控制台（可视化配置 + 可视化追踪）
+python3 metamemory_console/server.py --port 8100   # http://127.0.0.1:8100
 
 # 组合根冒烟：装配→装载流程→编译校验
 cd metamemory && python3 bootstrap.py

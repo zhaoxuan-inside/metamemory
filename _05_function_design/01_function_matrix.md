@@ -11,7 +11,7 @@
 | framework.contract | — | extract_by_mappings / flatten_by_mappings / assert_fields | — | — |
 | framework.engine | validate_graph / GraphExecutor.run | check_no_silent_default | detect_cycle | — |
 | framework.stores | — | — | cosine_top_k | 内存 Cache/Vector/Queue/Lock/PubSub 实现 |
-| framework.adapters | — | — | — | Embedded/Gateway Provider 骨架 |
+| framework.adapters | — | — | — | GatewayProvider（OpenAI 兼容 HTTP，唯一路径） |
 | framework.{security,registry,observe} | — | register_step / lookup | — | TenantCtx / Metrics 门面 |
 | core.protocol | protocol.add / protocol.search / Arbiter.decide | purpose_gate / coarse_filter / fine_check | — | 授权三元组模型 |
 | core.ingest | ingest 流程步骤编排（extract_deep） | fastpath_store / normalize_event / segment_units / pre_gate / dedupe_route / select_worthiness / verify_entailment / route_score | anchor_span | — |
@@ -303,3 +303,31 @@
 | 产出 | 修复：①单句内容自查重（dedupe 排除自身 episode，索引改 hash→列表）②身份词污染排序（全文路仅按内容重叠，CJK bigram 切词）③merge 丢各路排序（paths 真排序直供 RRF）④search top_k 契约落地⑤时间线路相关性过滤（拒答语义） |
 | 验收方式 | 102 单测全绿 + eval GATE PASS（recall@5 90.6%，首轮为 0%） |
 | 依赖 | T-029 | 预估 5min |
+
+
+### T-031 ADR-006 单一最佳路径（2026-09-27 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `_03/ADR-006-best-path-only.md`、`src/metamemory/ingest/extract.py`、`src/metamemory_framework/adapters/inference.py`、`flows/core/ingest.json`、`contracts/ingest_extract_deep.json` |
+| 产出 | 删除 extract_lite 降级、推理双通道自动互切、degraded 降档语义；GatewayProvider 真实 HTTP（OpenAI 兼容，stdlib urllib，绕过环境代理） |
+| 验收方式 | test_stores（假 OpenAI 端点 HTTP 往返/未配置显式失败/拒连 DependencyError）；102 单测 + eval GATE PASS |
+| 依赖 | T-014 | 预估 5min |
+
+### T-032 Web 管理控制台（2026-09-27 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `metamemory_console/{server.py,static/index.html,README.md}`、`tests/test_console.py` |
+| 产出 | 同级管理平台：可视化配置（五段配置表单保存即生效，网关热重建+持久化）+ 可视化追踪（任务/节点级状态机与输出、复核队列、指标 SVG 图）、检索验证、评测基线面板 |
+| 验收方式 | test_console（真实 HTTP 冒烟 6 例） |
+| 依赖 | T-020 | 预估 5min |
+
+### T-033 评测/索引同步（2026-09-27 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `metamemory-eval/harness.py`（RuleExtractionProvider 评测替身）、`_07_method_idx.json`（28 方法，extract_lite 移除） |
+| 产出 | 评测统一走替身 Provider（非系统路径）；_07 重生成 |
+| 验收方式 | eval GATE PASS（路由 100%/recall@5 90.6%/拒答 100%/拦截 100%） |
+| 依赖 | T-031 | 预估 5min |

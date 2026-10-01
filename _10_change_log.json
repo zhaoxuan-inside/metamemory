@@ -12,7 +12,7 @@
         "_02_principle/01_candidates.md",
         "_02_principle/02_conflict_analysis.md",
         "_03_tech_stack/01_selection.md",
-        "_03_tech_stack/ADR-001-unified-five-segment-signature.md",
+        "_03_tech_stack/ADR-001-unified-signature.md",
         "_03_tech_stack/ADR-002-three-layer-two-repo.md",
         "_03_tech_stack/ADR-003-abstain-first-class.md",
         "_03_tech_stack/ADR-004-store-slots-degradation.md",
@@ -240,6 +240,51 @@
       "author": "Agent",
       "verified": true,
       "notes": "评测基线（skeleton 档）：路由一致率 100%（合成集局限见 eval README）/ recall@5 90.6% / MRR 0.906 / 拒答正确 100% / 注入拦截 100%，GATE PASS。102 单测全绿。"
+    },
+    {
+      "id": "chg-004",
+      "date": "2026-09-27",
+      "requirement": "用户两项指令：① 移除一切质量降级路径，只保留最佳效果（ADR-006：删 extract_lite/推理双通道自动互切/degraded 降档；GatewayProvider 升级为真实 OpenAI 兼容 HTTP 通路）；② 新增同级 Web 管理控制台 metamemory_console（可视化配置 + 可视化追踪）",
+      "changed_files": [
+        "_03_tech_stack/ADR-006-best-path-only.md",
+        "metamemory/src/metamemory_framework/adapters/inference.py",
+        "metamemory/src/metamemory/ingest/extract.py",
+        "metamemory/flows/core/ingest.json",
+        "metamemory/contracts/ingest_extract_deep.json",
+        "metamemory/src/metamemory/protocol/facade.py",
+        "metamemory/src/metamemory/config.py",
+        "metamemory/bootstrap.py",
+        "metamemory/tests/test_stores.py",
+        "metamemory/tests/test_ingest.py",
+        "metamemory/tests/test_protocol.py",
+        "metamemory/tests/test_flows.py",
+        "metamemory/tests/test_bootstrap.py",
+        "metamemory/tests/test_config.py",
+        "metamemory/tests/common.py",
+        "metamemory_console/server.py",
+        "metamemory_console/static/index.html",
+        "metamemory_console/README.md",
+        "metamemory/tests/test_console.py",
+        "metamemory-eval/harness.py",
+        "metamemory-eval/README.md",
+        "metamemory-eval/reports/last_report.json",
+        "_00_project_idx.json",
+        "_04_framework_design/01_architecture.md",
+        "_05_function_design/01_function_matrix.md",
+        "_06_interface_design/01_external_api.md",
+        "_06_interface_design/02_internal_interfaces.md",
+        "_07_method_idx.json",
+        "_09_project_dict.json",
+        "_10_change_log.json",
+        "README.md"
+      ],
+      "commits": [],
+      "changed_methods": [
+        "m-018"
+      ],
+      "author": "Agent",
+      "verified": true,
+      "notes": "ADR-006 落点：extract_lite 移除（_07 由 29→28 方法）、flows/contracts 错误策略去 fallback（DependencyError→重试）、深提取支持网关文本 JSON 解析（prompt v1 入幂等键）、search 响应去 degraded、top_k 服务端截断。控制台：stdlib ThreadingHTTPServer + 单页前端（SVG 指标图/节点级追踪/配置热更新持久化 console_state.json）。评测统一使用 RuleExtractionProvider 评测替身（非系统路径）。验证：107 单测全绿 + eval GATE PASS（路由 100%/recall@5 90.6%/拒答 100%/拦截 100%）。ADR-004 槽位降级矩阵属基础设施可用性，本次未动，留用户后续裁定。 注：chg-001 的 ADR-001 路径已随 chg-002 重命名同步更新（ADR-001-unified-signature.md）。"
     }
   ]
 }

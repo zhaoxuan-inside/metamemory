@@ -125,6 +125,11 @@
           "file": "ADR-005-data-contract-jsonpath.md",
           "summary": "数据契约：版本化 JSON 文档 + JSONPath 映射 + 合同测试",
           "status": "accepted"
+        },
+        {
+          "file": "ADR-006-best-path-only.md",
+          "summary": "单一最佳路径：禁止质量降级链（用户裁定 2026-09-27）",
+          "status": "accepted"
         }
       ]
     },
@@ -275,17 +280,23 @@
         "path": "metamemory-eval/",
         "summary": "同级评测项目：golden 四态路由/recall 召回与拒答/injection 注入红队三套件 + 阈值门禁（测试工件，豁免 _07）",
         "owner": ""
+      },
+      {
+        "name": "web-console",
+        "path": "metamemory_console/",
+        "summary": "同级 Web 管理控制台：可视化配置（网关热更新）+ 可视化追踪（任务/节点级状态机、复核队列、指标）——stdlib 唯一依赖",
+        "owner": ""
       }
     ]
   },
   "method_index": {
     "path": "_07_method_idx.json",
     "stats": {
-      "total": 29,
+      "total": 28,
       "by_category": {
         "algorithm": 4,
         "orchestration": 9,
-        "data": 16
+        "data": 15
       }
     }
   },
@@ -295,7 +306,7 @@
   },
   "change_log": {
     "path": "_10_change_log.json",
-    "latest": "chg-003"
+    "latest": "chg-004"
   },
   "quality_gates": {
     "lint": "ruff check metamemory/src metamemory/tests",

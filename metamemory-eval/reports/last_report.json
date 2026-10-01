@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-30T09:51:17+0800",
-  "profile": null,
+  "generated_at": "2026-10-01T08:17:09+0800",
+  "profile": "lite",
   "golden": {
     "suite": "golden_route",
     "total": 63,

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-09-30T00:37:15+00:00",
+  "updated_at": "2026-10-01T00:17:08+00:00",
   "methods": [
     {
       "id": "m-001",
@@ -221,7 +221,7 @@
       "reusable": false,
       "dependencies": [
         "m-012",
-        "m-023"
+        "m-022"
       ],
       "tests": "metamemory/tests/test_ingest.py",
       "deprecated": false,
@@ -229,24 +229,6 @@
     },
     {
       "id": "m-015",
-      "signature": "boolean extract_lite(input, output, context, tenant, metrics, evolution)",
-      "name": "extract_lite",
-      "category": "data",
-      "layer": "core",
-      "module": "ingest",
-      "location": "metamemory/src/metamemory/ingest/extract.py",
-      "description": "降级提取：规则级命题化+同一套锚定/校验（fallback 目标）",
-      "reusable": false,
-      "dependencies": [
-        "m-012",
-        "m-023"
-      ],
-      "tests": "metamemory/tests/test_ingest.py",
-      "deprecated": false,
-      "replaced_by": null
-    },
-    {
-      "id": "m-016",
       "signature": "boolean fastpath_store(input, output, context, tenant, metrics, evolution)",
       "name": "fastpath_store",
       "category": "data",
@@ -261,7 +243,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-017",
+      "id": "m-016",
       "signature": "boolean normalize_event(input, output, context, tenant, metrics, evolution)",
       "name": "normalize_event",
       "category": "data",
@@ -276,7 +258,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-018",
+      "id": "m-017",
       "signature": "boolean organize_links(input, output, context, tenant, metrics, evolution)",
       "name": "organize_links",
       "category": "orchestration",
@@ -291,7 +273,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-019",
+      "id": "m-018",
       "signature": "boolean pre_gate(input, output, context, tenant, metrics, evolution)",
       "name": "pre_gate",
       "category": "data",
@@ -306,7 +288,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-020",
+      "id": "m-019",
       "signature": "boolean route_score(input, output, context, tenant, metrics, evolution)",
       "name": "route_score",
       "category": "data",
@@ -321,7 +303,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-021",
+      "id": "m-020",
       "signature": "boolean segment_units(input, output, context, tenant, metrics, evolution)",
       "name": "segment_units",
       "category": "data",
@@ -336,7 +318,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-022",
+      "id": "m-021",
       "signature": "boolean select_worthiness(input, output, context, tenant, metrics, evolution)",
       "name": "select_worthiness",
       "category": "data",
@@ -351,7 +333,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-023",
+      "id": "m-022",
       "signature": "boolean verify_entailment(input, output, context, tenant, metrics, evolution)",
       "name": "verify_entailment",
       "category": "data",
@@ -366,7 +348,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-024",
+      "id": "m-023",
       "signature": "boolean protocol_add(input, output, context, tenant, metrics, evolution)",
       "name": "protocol_add",
       "category": "orchestration",
@@ -376,14 +358,14 @@
       "description": "add 门面：配额→幂等→快通道→同事务入队（202 受理语义）",
       "reusable": false,
       "dependencies": [
-        "m-016"
+        "m-015"
       ],
       "tests": "metamemory/tests/test_protocol.py",
       "deprecated": false,
       "replaced_by": null
     },
     {
-      "id": "m-025",
+      "id": "m-024",
       "signature": "boolean protocol_search(input, output, context, tenant, metrics, evolution)",
       "name": "protocol_search",
       "category": "orchestration",
@@ -393,17 +375,17 @@
       "description": "search 门面：召回→RRF→裁决→预算组装（key 即查询者）",
       "reusable": false,
       "dependencies": [
+        "m-027",
         "m-028",
-        "m-029",
         "m-002",
-        "m-026"
+        "m-025"
       ],
       "tests": "metamemory/tests/test_protocol.py",
       "deprecated": false,
       "replaced_by": null
     },
     {
-      "id": "m-026",
+      "id": "m-025",
       "signature": "boolean budget_pack(input, output, context, tenant, metrics, evolution)",
       "name": "budget_pack",
       "category": "algorithm",
@@ -418,7 +400,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-027",
+      "id": "m-026",
       "signature": "boolean merge_candidates(input, output, context, tenant, metrics, evolution)",
       "name": "merge_candidates",
       "category": "data",
@@ -433,7 +415,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-028",
+      "id": "m-027",
       "signature": "boolean query_recall(input, output, context, tenant, metrics, evolution)",
       "name": "query_recall",
       "category": "orchestration",
@@ -443,14 +425,14 @@
       "description": "五路并行召回编排（fulltext/semantic/graph/timeline/context）",
       "reusable": false,
       "dependencies": [
-        "m-027"
+        "m-026"
       ],
       "tests": "metamemory/tests/test_query.py",
       "deprecated": false,
       "replaced_by": null
     },
     {
-      "id": "m-029",
+      "id": "m-028",
       "signature": "boolean rrf_fuse(input, output, context, tenant, metrics, evolution)",
       "name": "rrf_fuse",
       "category": "algorithm",
@@ -466,11 +448,11 @@
     }
   ],
   "stats": {
-    "total": 29,
+    "total": 28,
     "by_category": {
       "algorithm": 4,
       "orchestration": 9,
-      "data": 16
+      "data": 15
     }
   }
 }

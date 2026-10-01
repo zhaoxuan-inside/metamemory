@@ -23,7 +23,7 @@ import bootstrap  # noqa: E402
 from metamemory_framework.container.types import Context, Evolution  # noqa: E402
 from metamemory_framework.observe.metrics import MetricsImpl  # noqa: E402
 from metamemory_framework.security.context import set_tenant  # noqa: E402
-from metamemory.ingest.extract import extract_lite, route_score  # noqa: E402
+from metamemory.ingest.extract import extract_deep, route_score  # noqa: E402
 from metamemory.ingest.fastpath import fastpath_store  # noqa: E402
 from metamemory.ingest.steps import (  # noqa: E402
     normalize_event,
@@ -35,16 +35,27 @@ from metamemory.ingest.steps import (  # noqa: E402
 ROUTES = ("extract", "fold", "keep_raw", "abstain")
 
 
+class RuleExtractionProvider:
+    """评测替身（仅评测用，非系统路径——ADR-006）：解析 prompt 正文段落，逐句产出原子。"""
+
+    def complete(self, request: dict) -> dict:
+        body = request.get("prompt", "").split("段落：\n", 1)[-1]
+        atoms = [{"text": line, "subject": "user", "predicate": "mentioned",
+                  "quote": line, "entry_type": "fact"}
+                 for line in body.split("\n") if line.strip()]
+        return {"atoms": atoms, "provider": "eval_fixture"}
+
+
 def load_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def new_context(composition: dict):
+def new_context(composition: dict, inference=None):
     tenant = make_tenant()
     set_tenant(tenant)
     context = Context(
         deps={"store": composition["store"], "authz": composition["authz"],
-              "engine": composition["engine"], "inference": composition["inference"],
+              "engine": composition["engine"], "inference": inference or composition["inference"],
               "call_cache": composition["call_cache"], "flows": composition["flows"]},
         config=composition["config"],
     )
@@ -90,7 +101,7 @@ def run_route_suite(composition: dict, records: list[dict]) -> dict:
         sel: dict = {}
         select_worthiness({"gated": gate["gated"]}, sel, context, tenant, metrics, evolution)
         ext: dict = {}
-        extract_lite({"selected": sel["selected"], "normalized": norm["normalized"]}, ext, context, tenant, metrics, evolution)
+        extract_deep({"selected": sel["selected"], "normalized": norm["normalized"]}, ext, context, tenant, metrics, evolution)
         score: dict = {}
         route_score({"candidates": ext["candidates"]}, score, context, tenant, metrics, evolution)
         actual = score["routes"][0]["route"] if score.get("routes") else "keep_raw"
@@ -186,6 +197,7 @@ def run_injection_suite(composition: dict, records: list[dict]) -> dict:
 def run_all(datasets_dir: Path | None = None) -> dict:
     datasets = datasets_dir or EVAL_ROOT / "datasets"
     composition = bootstrap.build_composition()
+    composition["inference"] = RuleExtractionProvider()  # 评测运行统一使用替身（非系统路径）
     report = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "profile": composition["profile"],

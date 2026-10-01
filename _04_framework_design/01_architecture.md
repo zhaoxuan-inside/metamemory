@@ -26,7 +26,7 @@ graph TB
         F2[container 处理容器<br>五段执行+unified_method+异常策略]
         F3[contract 数据契约<br>JSONPath 提取/拍平/断言]
         F4[stores 9 槽位+降级矩阵]
-        F5[adapters 防腐层<br>InferenceProvider 双通道]
+        F5[adapters 防腐层<br>InferenceProvider 网关单通道]
         F6[queue/recovery/notify<br>准入·租约·三层通知]
         F7[security/registry/observe<br>RLS·版本·观测]
     end
@@ -63,7 +63,7 @@ graph TB
 | framework.contract | 框架 | JSONPath 提取/拍平、字段断言（confidence 软信号契约） | 全部（模块解耦） | extract_by_mappings、flatten_by_mappings、assert_fields |
 | framework.engine | 框架 | 流程图模型与编译校验（六型节点/五关）、lite 内嵌执行器 | US-1（管道） | validate_graph、GraphExecutor |
 | framework.stores | 框架 | Store 9 槽位 Protocol + 内存降级实现 | US-8（lite 全闭环） | 9 个 Protocol + fallbacks |
-| framework.adapters | 框架 | InferenceProvider 双通道（Embedded/Gateway 骨架） | 全部（模型无关） | InferenceProvider |
+| framework.adapters | 框架 | InferenceProvider 网关单通道（OpenAI 兼容 HTTP，ADR-006 无降级） | 全部（模型无关） | GatewayProvider |
 | framework.security/registry/observe/queue/recovery/notify | 框架 | 租户 contextvar/步骤注册表/观测门面/准入/租约/三层通知 | US-7（审计）、US-8 | TenantCtx、StepRegistry、Metrics |
 | core.protocol | 核心 | add/search 门面（import 白名单唯一入口）、VisionArbiter（粗筛+精裁+目的闸）、授权三元组、计量闸门 | US-2/4/5/6/7 | protocol.add/search；Arbiter.decide |
 | core.ingest | 核心 | 接收管道容器族（快通道/切分/门禁/查重/选取/提取/锚定/校验/四态/建网） | US-1/7 | 管道步骤注册名（ingest.*） |

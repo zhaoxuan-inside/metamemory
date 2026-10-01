@@ -36,7 +36,7 @@ python3 metamemory-eval/run_eval.py --suite recall
 
 ## 局限（诚实声明）
 
-- golden 路由 100% 是**合成集对启发式的同步收益**：标注与骨架规则同源构造，不构成忠实率证据；**真忠实率门禁（≥90%）要等 S1 强模型提取 + NLI 上线**后在本框架上跑（切换 `eval_config.json` 的 `active_profile: "s1"` 收紧阈值）。
+- golden 路由 100% 是**合成集对启发式的同步收益**：标注与骨架规则同源构造，不构成忠实率证据；路由套件使用评测替身 Provider（`RuleExtractionProvider`，非系统路径——ADR-006 唯一最佳路径）；**真忠实率门禁（≥90%）要等 S1 强模型提取 + NLI 上线**后在本框架上跑（切换 `eval_config.json` 的 `active_profile: "s1"` 收紧阈值）。
 - recall 评测的是 lite 词面检索（CJK bigram）；向量/图谱路接入后本框架直接复用（换 seeds 语义改写即可）。
 - 拒答判定目前是词面级（无重叠=拒答）；语义级拒答（"不知道就说不知道"）依赖 S1 置信门槛与 NLI。
 

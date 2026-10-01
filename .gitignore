@@ -19,3 +19,6 @@ venv/
 *.sqlite3
 *.db
 logs/
+
+# 控制台运行时状态
+metamemory_console/console_state.json

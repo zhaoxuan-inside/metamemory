@@ -30,7 +30,6 @@ META = {
     "dedupe_route": ("查重短路：同内容 hash 已入库路由 duplicate（省强模型调用）", False, "test_ingest.py", []),
     "select_worthiness": ("五维信号骨架+反面清单 → 值得度 high/mid/low/none", False, "test_ingest.py", []),
     "extract_deep": ("深提取编排：强模型命题化，逐原子补锚定与 NLI 判定", False, "test_ingest.py", ["anchor_span", "verify_entailment"]),
-    "extract_lite": ("降级提取：规则级命题化+同一套锚定/校验（fallback 目标）", False, "test_ingest.py", ["anchor_span", "verify_entailment"]),
     "anchor_span": ("引文锚定：原文 span 定位（纯计算；找不到是业务结论）", True, "test_ingest.py", []),
     "verify_entailment": ("NLI 忠实校验骨架（entail/contradict/neutral 三态）", False, "test_ingest.py", []),
     "route_score": ("四态路由：提取/折叠/留原文/abstain（原因码必填，禁默认落置）", False, "test_ingest.py", []),

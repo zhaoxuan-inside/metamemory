@@ -67,7 +67,7 @@
 | intent | string | — | 检索意图三分：fact（默认）/ timepoint / autobiographical——质量分层参数非新 API（R5） |
 | purpose | string | 条件 | 查询者声明目的；访问 L4/L5 公开面时必填（目的闸） |
 | scope | string | — | self（默认）/ network / public——同一端点的三重搜索面，结果集由裁决决定（ADR 15） |
-| top_k | int | — | 默认 10，≤50 |
+| top_k | int | — | 默认 10，≤50（服务端按融合序截断，契约强制） |
 | mode | string | — | `fused`（默认）/ `grep`（原文层语义 grep，NDJSON 输出） |
 | verify | bool | — | true = 精确验证模式（逐条附 entailment 判定与引文证据） |
 
@@ -80,10 +80,10 @@
     "source_level": "S1", "visibility": "L2", "episode_ref": "ep_…",
     "learned_at": "2026-09-27T10:00:00+08:00", "valid": {"from": "…", "to": null}
   }],
-  "unanswered": null, "degraded": {"rerank": false} }
+  "unanswered": null }
 ```
 
-- **语义**：`confidence_label` 恒不掩盖推测（"你明确说过" vs "我推测"）；无命中时 `unanswered` 给出"不知道就说不知道"的显式结论，禁止凑数返回；`degraded` 透出降档（rerank 缺席退 RRF 直出，C-G）；结果已过 VisionArbiter（粗筛→精裁→公开层目的闸），放行写审计流。
+- **语义**：`confidence_label` 恒不掩盖推测（"你明确说过" vs "我推测"）；无命中时 `unanswered` 给出"不知道就说不知道"的显式结论，禁止凑数返回；结果已过 VisionArbiter（粗筛→精裁→公开层目的闸），放行写审计流。
 
 ### API-005 POST /v1/context
 
