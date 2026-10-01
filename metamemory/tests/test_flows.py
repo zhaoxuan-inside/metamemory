@@ -26,7 +26,7 @@ class TestFlows(unittest.TestCase):
         registry = self.composition["registry"]
         for step in ("ingest.normalize_event", "ingest.segment_units", "ingest.pre_gate",
                      "ingest.dedupe_route", "ingest.select_worthiness", "ingest.extract_deep",
-                     "ingest.extract_lite", "ingest.route_score", "ingest.organize_links",
+                     "ingest.route_score", "ingest.organize_links",
                      "ingest.fastpath_store"):
             self.assertIsNotNone(registry.lookup(step), f"步骤未注册: {step}")
 
@@ -35,7 +35,7 @@ class TestFlows(unittest.TestCase):
         self.assertEqual(CONTRACT["name"], "ingest.extract_deep")
         self.assertIn("selected", CONTRACT["input_map"])
         self.assertEqual(CONTRACT["error_policy"]["Undecidable"]["action"], "abstain")
-        self.assertEqual(CONTRACT["error_policy"]["DependencyError"]["to"], "ingest.extract_lite@1")
+        self.assertEqual(CONTRACT["error_policy"]["DependencyError"]["action"], "retry")  # ADR-006 无降级
         self.assertEqual(CONTRACT["error_policy"]["*"]["action"], "dead_letter")
 
     def test_validate_contract_with_assertor(self):

@@ -6,7 +6,8 @@ from pathlib import Path
 
 SRC = Path(__file__).resolve().parent.parent / "src"
 CODE_ROOT = Path(__file__).resolve().parent.parent
-for path in (str(SRC), str(CODE_ROOT)):
+REPO_ROOT = CODE_ROOT.parent          # 仓库根：同级项目 metamemory-console / metamemory-eval
+for path in (str(SRC), str(CODE_ROOT), str(REPO_ROOT)):
     if path not in sys.path:
         sys.path.insert(0, path)
 

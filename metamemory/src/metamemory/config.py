@@ -25,8 +25,18 @@ class RecallConfig:
     top_k: int = 10                       # search 默认返回条数（≤50）
     token_budget: int = 2048              # express 组装预算
     rrf_k: int = 60                       # RRF 融合常数（技术词典）
-    rerank_enabled: bool = False          # lite 档默认关（C-G 可降档）
     default_intent: str = "fact"          # 检索意图三分默认档（R5）
+
+
+@dataclass
+class InferenceConfig:
+    """推理网关（唯一最佳路径，ADR-006）：任意 OpenAI 兼容端点（vLLM/Ollama/Ark/OpenAI）。"""
+
+    base_url: str = ""                    # 如 http://localhost:11434/v1（Ollama）；空 = 显式配置错误
+    api_key: str = ""                     # 云端端点填 API Key；本地端点可空
+    model: str = ""                       # 强模型名（深提取/摘要/L4 精修）
+    timeout_seconds: int = 60
+    prompt_version: str = "v1"            # 深提取 prompt 版本（llm_calls 幂等键组成）
 
 
 @dataclass
@@ -49,6 +59,7 @@ class GovernanceConfig:
 class MetaMemoryConfig:
     profile: str = "lite"                 # lite：单容器本地全闭环（US-8，推荐默认）
     quota: QuotaConfig = field(default_factory=QuotaConfig)
+    inference: InferenceConfig = field(default_factory=InferenceConfig)
     recall: RecallConfig = field(default_factory=RecallConfig)
     memory: MemoryConfig = field(default_factory=MemoryConfig)
     governance: GovernanceConfig = field(default_factory=GovernanceConfig)
@@ -62,7 +73,7 @@ class MetaMemoryConfig:
 
     @classmethod
     def from_dict(cls, data: dict) -> "MetaMemoryConfig":
-        sections = {"quota": QuotaConfig, "recall": RecallConfig,
+        sections = {"quota": QuotaConfig, "inference": InferenceConfig, "recall": RecallConfig,
                     "memory": MemoryConfig, "governance": GovernanceConfig}
         known = {k: v for k, v in data.items() if k in ("profile",) or k in sections}
         kwargs = {"profile": known.get("profile", "lite")}

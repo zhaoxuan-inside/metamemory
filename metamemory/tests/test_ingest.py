@@ -6,7 +6,6 @@ from common import make_tenant, stubs
 from metamemory.ingest.extract import (
     anchor_span,
     extract_deep,
-    extract_lite,
     route_score,
     verify_entailment,
 )
@@ -168,12 +167,6 @@ class TestExtractAndRoute(unittest.TestCase):
         self.assertEqual(reasons["无锚点"], "NO_ANCHOR")
         self.assertEqual(reasons["矛盾"], "NLI_REJECT")
         self.assertEqual(len(out["review_refs"]), 2)
-
-    def test_extract_lite_is_degraded_fallback(self):
-        ctx, tenant, m, evo = stubs()
-        out = {}
-        self.assertTrue(extract_lite({"selected": [{"text": "句子", "span": [0, 2]}]}, out, ctx, tenant, m, evo))
-        self.assertTrue(out["degraded"])
 
 
 class TestOrganize(unittest.TestCase):

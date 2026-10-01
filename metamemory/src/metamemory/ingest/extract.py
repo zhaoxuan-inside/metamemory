@@ -5,6 +5,8 @@ abstain（约束 15：判不了是合法结论，禁默认落置）；注入疑�
 """
 from __future__ import annotations
 
+import json
+
 from metamemory_framework.container.policy import ContractViolation
 from metamemory_framework.container.signature import unified_method
 
@@ -59,21 +61,6 @@ def _enrich(atom: dict, episode_content: str, worthiness_map: dict, tenant) -> d
                       verdict, None, tenant, _Quiet(), _QuietEvo())
     worthiness = worthiness_map.get(atom.get("quote") or atom["text"], "mid")
     return {**atom, **anchor, **verdict, "worthiness": worthiness}
-
-
-@unified_method("ingest.extract_lite", 1, "data")
-def extract_lite(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
-    """降级路径（policy fallback 目标）：规则级命题化 + 同一套锚定/校验，质量降级语义不丢。"""
-    episode_content = input.get("normalized", {}).get("content", "")
-    worthiness_map = {s["text"]: s.get("worthiness", "mid") for s in input.get("selected") or []}
-    atoms = [{"text": s["text"], "subject": "user", "predicate": "mentioned",
-              "quote": s["text"], "entry_type": "fact"}
-             for s in input.get("selected") or input.get("segments") or []]
-    candidates = [_enrich(atom, episode_content, worthiness_map, tenant) for atom in atoms]
-    output["atom_candidates"] = candidates
-    output["candidates"] = candidates
-    output["degraded"] = True
-    return True
 
 
 @unified_method("ingest.anchor_span", 1, "algorithm")
@@ -138,8 +125,26 @@ def route_score(input: dict, output: dict, context, tenant, metrics, evolution) 
     return True
 
 
+def _parse_atoms_text(text: str | None) -> list | None:
+    """网关文本 → 原子列表：约定 JSON 数组（命题/主谓宾/引文），解析失败交复核。"""
+    if not text:
+        return None
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    return parsed if isinstance(parsed, list) else None
+
+
 def _build_prompt(segments: list) -> str:
-    return "\n".join(segment.get("text", "") for segment in segments)
+    """深提取 prompt（v1）：命题化 + 强制引文 + JSON 数组输出（prompt 版本入幂等键）。"""
+    lines = [segment.get("text", "") for segment in segments]
+    return (
+        "你是记忆提取引擎。把下面的每一段话拆成原子断言（一句可拆多条），"
+        "只输出 JSON 数组，每个元素含字段：text（断言内容）、subject、predicate、"
+        "quote（必须逐字来自原文，用于引文锚定）、entry_type（preference/fact/promise/event）。\n"
+        "段落：\n" + "\n".join(lines)
+    )
 
 
 class _Quiet:

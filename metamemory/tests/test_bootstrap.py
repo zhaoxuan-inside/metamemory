@@ -8,9 +8,20 @@ from metamemory_framework.container.types import Evolution
 from metamemory_framework.observe.metrics import MetricsImpl
 
 
+class _FakeProvider:
+    """测试替身：返回结构化原子的强模型网关（ADR-006 唯一路径的测试注入点）。"""
+
+    def complete(self, request: dict) -> dict:
+        atoms = [{"text": line, "subject": "user", "predicate": "mentioned",
+                  "quote": line, "entry_type": "fact"}
+                 for line in request.get("prompt", "").split("\n") if line.strip()]
+        return {"atoms": atoms, "provider": "fake"}
+
+
 class TestBootstrapEndToEnd(unittest.TestCase):
     def setUp(self):
         self.composition = bootstrap.build_composition()
+        self.composition["inference"] = _FakeProvider()  # 测试替身：模拟已配置的强模型网关
         set_tenant(mk_tenant())
 
     def _context(self):

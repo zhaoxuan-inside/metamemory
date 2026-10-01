@@ -76,7 +76,6 @@ def protocol_search(input: dict, output: dict, context, tenant, metrics, evoluti
                 packed, context, tenant, metrics, evolution)
     output["items"] = packed.get("packed", [])
     output["denials"] = arb_out.get("denials", [])
-    output["degraded"] = {"rerank": False}
     output["unanswered"] = {"reason": "NO_MATCH"} if not packed.get("packed") else None
     return True
 

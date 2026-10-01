@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from metamemory_framework.adapters.inference import InferenceRouter
+from metamemory_framework.adapters.inference import load_provider
 from metamemory_framework.engine.executor import GraphExecutor
 from metamemory_framework.engine.graph import pipeline_from_dict, validate_graph
 from metamemory_framework.recovery.cache import CallCache
@@ -44,11 +44,11 @@ def build_composition(profile: str | None = None, config: MetaMemoryConfig | Non
     flows = load_flows()
     engine = GraphExecutor(REGISTRY)
     composition = {
-        "profile": profile,
+        "profile": cfg.profile,
         "store": store,
         "authz": AuthzRegistry(store),
         "engine": engine,
-        "inference": InferenceRouter(),
+        "inference": load_provider(cfg.to_dict()["inference"]),
         "call_cache": CallCache(),
         "flows": flows,
         "registry": REGISTRY,

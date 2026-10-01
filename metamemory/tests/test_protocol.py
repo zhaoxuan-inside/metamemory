@@ -75,7 +75,7 @@ class TestProtocolSearch(unittest.TestCase):
         item = out["items"][0]
         self.assertIn("fusion_score", item)
         self.assertIn("confidence", item)
-        self.assertEqual(out["degraded"], {"rerank": False})  # lite 档 RRF 直出（C-G）
+        self.assertNotIn("degraded", out)  # ADR-006：无降级语义
 
     def test_search_unanswered_when_nothing(self):
         ctx, tenant, m, evo = stubs()

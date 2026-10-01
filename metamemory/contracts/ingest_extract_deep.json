@@ -3,22 +3,60 @@
   "version": 1,
   "owner_step": "ingest.extract_deep@1",
   "input_map": {
-    "selected": { "path": "$.selected", "required": true, "type": "list" },
-    "normalized_content": { "path": "$.normalized.content", "type": "str" }
+    "selected": {
+      "path": "$.selected",
+      "required": true,
+      "type": "list"
+    },
+    "normalized_content": {
+      "path": "$.normalized.content",
+      "type": "str"
+    }
   },
   "flatten_map": {
-    "atom_candidates": { "from": "atom_candidates", "path": "$.atom_candidates" },
-    "status": { "from": "status", "default": "ok" }
+    "atom_candidates": {
+      "from": "atom_candidates",
+      "path": "$.atom_candidates"
+    },
+    "status": {
+      "from": "status",
+      "default": "ok"
+    }
   },
   "assertions": [
-    { "field": "confidence", "type": "number", "min": 0, "max": 1 }
+    {
+      "field": "confidence",
+      "type": "number",
+      "min": 0,
+      "max": 1
+    }
   ],
   "error_policy": {
-    "ContractViolation": { "action": "review" },
-    "TransientError": { "action": "retry", "max": 3, "backoff": "exp" },
-    "DependencyError": { "action": "fallback", "to": "ingest.extract_lite@1" },
-    "BusinessReject": { "action": "reply", "value": { "status": "skipped" } },
-    "Undecidable": { "action": "abstain" },
-    "*": { "action": "dead_letter", "alert": true }
+    "ContractViolation": {
+      "action": "review"
+    },
+    "TransientError": {
+      "action": "retry",
+      "max": 3,
+      "backoff": "exp"
+    },
+    "DependencyError": {
+      "action": "retry",
+      "max": 3,
+      "backoff": "exp"
+    },
+    "BusinessReject": {
+      "action": "reply",
+      "value": {
+        "status": "skipped"
+      }
+    },
+    "Undecidable": {
+      "action": "abstain"
+    },
+    "*": {
+      "action": "dead_letter",
+      "alert": true
+    }
   }
 }

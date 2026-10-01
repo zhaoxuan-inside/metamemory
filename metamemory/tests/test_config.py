@@ -15,7 +15,7 @@ class TestDefaults(unittest.TestCase):
         self.assertEqual(cfg.recall.rrf_k, 60)                      # 技术词典
         self.assertEqual(cfg.recall.top_k, 10)
         self.assertEqual(cfg.recall.token_budget, 2048)
-        self.assertFalse(cfg.recall.rerank_enabled)                 # C-G lite 默认关
+        self.assertEqual(cfg.inference.prompt_version, 'v1')        # 网关幂等键组成（ADR-006 唯一路径）
         self.assertEqual(cfg.quota.discovery_slots_free, 3)         # G3 口径
         self.assertTrue(cfg.governance.purpose_gate_enforced)       # 约束 16 本期必做
         self.assertEqual(cfg.governance.audit_retention_domain_days, 180)
