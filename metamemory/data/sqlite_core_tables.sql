@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS memory_entries (
   valid_to         TEXT,
   learned_at       REAL NOT NULL,
   supersedes       TEXT REFERENCES memory_entries(entry_id),
-  anchor_episode   TEXT NOT NULL,
+  anchor_episode   TEXT,                        -- 无引文不记忆；唯一例外 entry_type='intent'（声明即来源）
   anchor_start     INTEGER NOT NULL DEFAULT 0,
   anchor_end       INTEGER NOT NULL DEFAULT 0,
   source_level     TEXT NOT NULL CHECK (source_level IN ('S1','S2','S3','S4')),
@@ -54,7 +54,9 @@ CREATE TABLE IF NOT EXISTS memory_entries (
   embedding_model  TEXT,
   injected_suspect INTEGER NOT NULL DEFAULT 0,
   gray_forgotten   INTEGER NOT NULL DEFAULT 0,   -- 灰色遗忘降权（manage.forget gray，可恢复）
-  created_at       TEXT NOT NULL
+  stale            INTEGER NOT NULL DEFAULT 0,   -- 血缘回溯标记（recompute 管道消费）
+  created_at       TEXT NOT NULL,
+  CHECK (entry_type = 'intent' OR anchor_episode IS NOT NULL)
 );
 CREATE INDEX IF NOT EXISTS idx_entries_superseded ON memory_entries (supersedes) WHERE supersedes IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_entries_visibility ON memory_entries (tenant_id, visibility);

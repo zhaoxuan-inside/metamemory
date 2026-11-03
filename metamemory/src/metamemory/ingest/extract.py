@@ -20,6 +20,9 @@ def extract_deep(input: dict, output: dict, context, tenant, metrics, evolution)
         return False
     prompt = _build_prompt(input.get("selected") or input.get("segments") or [])
     response = _complete_cached(context, metrics, provider, prompt)
+    ledger = context.deps.get("metering")
+    if ledger is not None and response.get("tokens"):
+        ledger.record(tenant.tenant_id, "llm.tokens", response["tokens"], source="ingest.extract_deep")
     atoms = response.get("atoms")
     if atoms is None:
         raise ContractViolation("extract_response_missing_atoms")

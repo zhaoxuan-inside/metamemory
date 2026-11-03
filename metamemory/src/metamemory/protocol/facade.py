@@ -43,7 +43,14 @@ def protocol_add(input: dict, output: dict, context, tenant, metrics, evolution)
         "episode_id": fastpath["episode_id"],
         "normalized": {k: input["event"][k] for k in ("source_uri", "content", "actor", "occurred_at")},
         "event": input["event"],
-    })
+    }, tenant_id=tenant.tenant_id)
+    audit = context.deps.get("audit")
+    if audit is not None:
+        audit.append(tenant.actor, "memory.add", input["event"]["source_uri"],
+                     tenant_id=tenant.tenant_id, detail={"task_id": task_id})
+    ledger = context.deps.get("metering")
+    if ledger is not None:
+        ledger.record(tenant.tenant_id, "storage.events", 1, source="protocol.add")
     metrics.counter("add.accepted")
     output.update({"task_id": task_id, "sse_url": f"/v1/tasks/{task_id}/events",
                    "fastpath": {"stored": True, "searchable_in": "<100ms"},
@@ -78,6 +85,15 @@ def protocol_search(input: dict, output: dict, context, tenant, metrics, evoluti
     output["items"] = packed.get("packed", [])
     output["denials"] = arb_out.get("denials", [])
     output["unanswered"] = {"reason": "NO_MATCH"} if not packed.get("packed") else None
+    audit = context.deps.get("audit")  # 读取路径审计：全量不采样（US-7）
+    if audit is not None:
+        audit.append(tenant.actor, "search.served", input["query"][:128],
+                     tenant_id=tenant.tenant_id,
+                     detail={"allowed": len(output["items"]), "denied": len(output["denials"])})
+    ledger = context.deps.get("metering")
+    if ledger is not None:
+        ledger.record(tenant.tenant_id, "search.served", 1, source="protocol.search")
+    metrics.counter("search.served")
     return True
 
 

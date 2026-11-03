@@ -64,7 +64,8 @@ def query_recall(input: dict, output: dict, context, tenant, metrics, evolution)
     store: MemoryStore = context.deps["store"]
     tokens = _tokenize(input["query"].lower())
     paths: dict[str, list[dict]] = {
-        "fulltext": _fulltext_path(store, tokens),
+        "fulltext": _fulltext_path(store, tokens, fts=context.deps.get("fts") if context is not None else None,
+                                   query=input["query"]),
         "semantic": _semantic_path(store, tokens),
         "graph": _graph_path(store, tokens),
         "timeline": _timeline_path(store, tokens, input.get("since")),
@@ -72,18 +73,42 @@ def query_recall(input: dict, output: dict, context, tenant, metrics, evolution)
     }
     merged: dict = {}
     merge_candidates({"paths": paths}, merged, context, tenant, metrics, evolution)
+    published_purposes = _published_purposes(store)
+    for candidate in merged.get("candidates", []):  # 公开面目的闸谓词（约束 16）随候选携带
+        purposes = published_purposes.get(candidate["memory_id"])
+        if purposes is not None:
+            candidate["published_purposes"] = purposes
+            candidate["published"] = True
     output["candidates"] = merged.get("candidates", [])
     output["paths"] = {name: [item["memory_id"] for item in items]  # 各路真排序（RRF 输入）
                        for name, items in paths.items()}
     return True
 
 
-def _fulltext_path(store: MemoryStore, tokens: set[str]) -> list[dict]:
-    """lite 全文路：内容词面重叠打分（FullTextStore 接口位）。
+def _published_purposes(store: MemoryStore) -> dict[str, list[str]]:
+    """发布投影索引：entry_id → 允许目的集（review_status=published 才进入公开裁决面）。"""
+    index: dict[str, list[str]] = {}
+    for item in getattr(store, "published", {}).values():
+        if item.review_status == "published":
+            index.setdefault(item.entry_id, []).extend(item.allowed_purposes)
+    return index
 
-    只按 object_value（内容）算重叠——subject/predicate 是身份词不是内容信号，
+
+def _fulltext_path(store: MemoryStore, tokens: set[str], fts=None, query: str = "") -> list[dict]:
+    """全文路：优先 FullTextStore 槽位（bm25，organize 时已索引）；缺席退词面重叠。
+
+    词面重叠只按 object_value（内容）算——subject/predicate 是身份词不是内容信号，
     计入会让全体条目基线同分、RRF 排序退化（评测黄金集暴露的真实缺陷）。
     """
+    if fts is not None and query:
+        indexed = fts.search("entries", query, k=20)
+        hits = []
+        for hit in indexed:
+            entry = store.entries.get(hit["id"])
+            if entry is not None and not entry.gray_forgotten:
+                hits.append(_candidate(entry, hit["score"]))
+        if hits:
+            return hits  # bm25 有命中即用（索引与条目库同源同写，见 organize）
     hits = []
     for entry in store.entries.values():
         if entry.gray_forgotten:  # 灰色遗忘：降权条目退出检索面（可恢复）

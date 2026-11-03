@@ -18,7 +18,9 @@ from metamemory_framework.registry.registry import REGISTRY
 
 # 注册核心层步骤（import 即注册：unified_method 装饰器副作用）
 from metamemory.ingest import extract, fastpath, organize, steps  # noqa: F401,E402
-from metamemory.protocol import arbiter, facade  # noqa: F401,E402
+from metamemory.protocol import arbiter, facade, governance, intents  # noqa: F401,E402
+from metamemory.protocol.audit import AuditLog  # noqa: E402
+from metamemory.protocol.metering import MeteringLedger  # noqa: E402
 from metamemory.query import express, fusion, recall  # noqa: F401,E402
 from metamemory.config import MetaMemoryConfig, load_config  # noqa: E402
 from metamemory.protocol.authorization import AuthzRegistry  # noqa: E402
@@ -74,10 +76,15 @@ def build_composition(profile: str | None = None, config: MetaMemoryConfig | Non
                                 secret=notify_cfg.get("webhook_secret", ""),
                                 max_attempts=int(notify_cfg.get("webhook_max_attempts", 5)),
                                 timeout_seconds=int(notify_cfg.get("webhook_timeout_seconds", 10)))
+    from metamemory.protocol.governance import ConfirmationSigner
+
     engine = GraphExecutor(REGISTRY, journal=SqliteTaskJournal(db),
                            notify=NotifyFanout(progress_bus, OutboxNotifier(db), webhook),
                            flow_provider=_flow_provider(cfg))
     composition = {
+        "audit": AuditLog(db),
+        "metering": MeteringLedger(db),
+        "confirm_signer": ConfirmationSigner(db),
         "profile": cfg.profile,
         "db": db,
         "store": store,

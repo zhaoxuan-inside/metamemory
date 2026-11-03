@@ -88,7 +88,7 @@ CREATE TABLE memory_entries (
   valid_from timestamptz NOT NULL, valid_to timestamptz,
   learned_at timestamptz NOT NULL DEFAULT now(),
   supersedes uuid REFERENCES memory_entries(id),
-  anchor_episode uuid NOT NULL REFERENCES memory_episodes(id),
+  anchor_episode uuid REFERENCES memory_episodes(id),              -- 无引文不记忆；唯一例外 entry_type='intent'（声明即来源）
   anchor_span int4range NOT NULL,
   source_level text NOT NULL CHECK (source_level IN ('S1','S2','S3','S4')),
   confidence numeric(4,3) NOT NULL CHECK (confidence BETWEEN 0 AND 1),
@@ -98,7 +98,10 @@ CREATE TABLE memory_entries (
   embedding vector(1024), embedding_model text,
   injected_suspect boolean NOT NULL DEFAULT false,
   generic_tags jsonb NOT NULL DEFAULT '{}',
-  created_at timestamptz NOT NULL DEFAULT now()
+  gray_forgotten boolean NOT NULL DEFAULT false,                   -- 灰色遗忘降权（manage.forget gray）
+  stale boolean NOT NULL DEFAULT false,                            -- 血缘回溯标记（recompute 管道）
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CHECK (entry_type = 'intent' OR anchor_episode IS NOT NULL)
 );
 CREATE INDEX idx_entries_superseded ON memory_entries (supersedes) WHERE supersedes IS NOT NULL;
 CREATE INDEX idx_entries_visibility ON memory_entries (tenant_id, visibility);

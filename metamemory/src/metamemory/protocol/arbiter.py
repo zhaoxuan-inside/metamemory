@@ -89,6 +89,13 @@ def arbiter_decide(input: dict, output: dict, context, tenant, metrics, evolutio
         denials += result.get("denials", [])
     metrics.counter("arbiter.allowed", len(current))
     metrics.counter("arbiter.denied", len(denials))
-    trace = tenant.trace_id if tenant is not None else "n/a"
-    output.update({"allowed": current, "denials": denials, "audit_ref": f"audit:{trace}"})
+    audit = context.deps.get("audit") if context is not None else None
+    audit_ref = f"audit:{tenant.trace_id}" if tenant is not None else "audit:n/a"
+    if audit is not None:  # 裁决放行写审计流（公理 6：唯一裁决点，全量不采样）
+        record = audit.append(tenant.actor if tenant is not None else "system", "arbiter.decide",
+                              audit_ref, tenant_id=getattr(tenant, "tenant_id", None),
+                              detail={"allowed": len(current),
+                                      "denials": [d.get("reason") for d in denials]})
+        audit_ref = record.get("record_hash", audit_ref)
+    output.update({"allowed": current, "denials": denials, "audit_ref": audit_ref})
     return True

@@ -87,6 +87,8 @@ class MemoryStore:
         return item
 
     def save_intent(self, intent: IntentRecord) -> IntentRecord:
+        if not intent.intent_id:
+            intent.intent_id = f"intent_{intent.entry_id}"
         self.intents[intent.entry_id] = intent
         return intent
 

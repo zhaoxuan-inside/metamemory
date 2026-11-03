@@ -80,14 +80,14 @@ class PersistentMemoryStore(MemoryStore):
                 object_value=row["object_value"], entry_type=row["entry_type"],
                 valid_from=row["valid_from"], valid_to=row["valid_to"],
                 learned_at=row["learned_at"], supersedes=row["supersedes"],
-                anchor_episode=row["anchor_episode"],
+                anchor_episode=row["anchor_episode"] or "",
                 anchor_span=(row["anchor_start"], row["anchor_end"]),
                 source_level=row["source_level"], confidence=row["confidence"],
                 visibility=row["visibility"], strength=row["strength"],
                 last_recall_at=row["last_recall_at"],
                 embedding=blob_to_vec(row["embedding"]), embedding_model=row["embedding_model"] or "",
                 injected_suspect=bool(row["injected_suspect"]),
-                gray_forgotten=bool(row["gray_forgotten"]),
+                gray_forgotten=bool(row["gray_forgotten"]), stale=bool(row["stale"]),
             ))
         for row in self.db.query("SELECT * FROM association_edges ORDER BY rowid"):
             self.edges.append(AssociationEdge(
@@ -152,15 +152,16 @@ class PersistentMemoryStore(MemoryStore):
             "INSERT OR REPLACE INTO memory_entries(entry_id, tenant_id, domain_id, subject, predicate,"
             " object_value, entry_type, valid_from, valid_to, learned_at, supersedes, anchor_episode,"
             " anchor_start, anchor_end, source_level, confidence, visibility, strength, last_recall_at,"
-            " embedding, embedding_model, injected_suspect, gray_forgotten, created_at)"
-            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            " embedding, embedding_model, injected_suspect, gray_forgotten, stale, created_at)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (entry.entry_id, entry.tenant_id, entry.domain_id, entry.subject, entry.predicate,
              entry.object_value, entry.entry_type, entry.valid_from, entry.valid_to,
-             entry.learned_at, entry.supersedes, entry.anchor_episode,
+             entry.learned_at, entry.supersedes, entry.anchor_episode or None,
              entry.anchor_span[0], entry.anchor_span[1], entry.source_level, entry.confidence,
              entry.visibility, entry.strength, entry.last_recall_at,
              vec_to_blob(entry.embedding) if entry.embedding is not None else None,
-             entry.embedding_model, int(entry.injected_suspect), int(entry.gray_forgotten), _NOW()))
+             entry.embedding_model, int(entry.injected_suspect), int(entry.gray_forgotten),
+             int(entry.stale), _NOW()))
         return super().add_entry(entry)
 
     def add_edge(self, edge: AssociationEdge) -> AssociationEdge:
@@ -193,6 +194,11 @@ class PersistentMemoryStore(MemoryStore):
         self.db.execute("UPDATE memory_entries SET embedding=?, embedding_model=? WHERE entry_id=?",
                         (vec_to_blob(entry.embedding) if entry.embedding is not None else None,
                          entry.embedding_model, entry.entry_id))
+
+    def set_entry_stale(self, entry: MemoryEntry) -> None:
+        """血缘回溯标记写穿（recompute 管道 collect/clear 消费）。"""
+        self.db.execute("UPDATE memory_entries SET stale=? WHERE entry_id=?",
+                        (int(entry.stale), entry.entry_id))
 
     def gray_forget(self, entry_id: str) -> bool:
         """灰色遗忘：降权可恢复（strength=0 + 标记；检索路排除）。"""
@@ -262,6 +268,8 @@ class PersistentMemoryStore(MemoryStore):
         return item
 
     def save_intent(self, intent: IntentRecord) -> IntentRecord:
+        if not intent.intent_id:
+            intent.intent_id = f"intent_{intent.entry_id}"
         self.intents[intent.entry_id] = intent
         self.db.execute(
             "INSERT OR REPLACE INTO intent_details(entry_id, state, ttl_expires_at, visibility,"

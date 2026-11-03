@@ -12,7 +12,7 @@ class FakeEngine:
         self.pipeline = pipeline
         self.submitted = []
 
-    def submit(self, pipeline, params, task_id=None):
+    def submit(self, pipeline, params, task_id=None, tenant_id=None):
         self.submitted.append((pipeline, params))
         return f"tsk_{len(self.submitted):06d}"
 

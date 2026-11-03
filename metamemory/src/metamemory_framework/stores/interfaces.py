@@ -22,6 +22,8 @@ class VectorStore(Protocol):
 
     def search(self, ns: str, query: list[float], k: int) -> list[dict]: ...
 
+    def remove(self, ns: str, doc_id: str) -> int: ...
+
 
 @runtime_checkable
 class FullTextStore(Protocol):
@@ -31,6 +33,8 @@ class FullTextStore(Protocol):
 
     def search(self, ns: str, query: str, k: int) -> list[dict]: ...
 
+    def remove(self, ns: str, doc_id: str) -> int: ...
+
 
 @runtime_checkable
 class GraphStore(Protocol):
@@ -39,6 +43,8 @@ class GraphStore(Protocol):
     def upsert_edge(self, src: str, dst: str, edge_type: str, props: dict) -> None: ...
 
     def walk(self, src: str, edge_types: list[str], depth: int) -> list[dict]: ...
+
+    def remove_node(self, node_id: str) -> int: ...
 
 
 @runtime_checkable

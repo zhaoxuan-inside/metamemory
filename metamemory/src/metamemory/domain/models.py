@@ -66,6 +66,7 @@ class MemoryEntry:
     embedding: list[float] | None = None    # 语义向量（网关 embeddings，落库 BLOB）
     embedding_model: str = ""
     gray_forgotten: bool = False            # 灰色遗忘降权（manage.forget gray，可恢复）
+    stale: bool = False                     # 血缘回溯标记（纠错沿派生链下游重算，recompute 管道）
 
 
 @dataclass
@@ -85,8 +86,8 @@ class AssociationEdge:
 class IntentRecord:
     """意图（唯一时效/可交易/需确认的记忆）：核心层只有字段与状态机位。"""
 
-    intent_id: str
     entry_id: str
+    intent_id: str = ""  # 缺省 = entry_id（意图与条目 1:1）
     state: str = "candidate"  # candidate|active|expired|completed
     ttl_expires_at: str | None = None
     visibility: str = "L1"

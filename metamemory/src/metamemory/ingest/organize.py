@@ -28,6 +28,9 @@ def organize_links(input: dict, output: dict, context, tenant, metrics, evolutio
         else:
             store.add_entry(entry)
         entry_ids.append(entry.entry_id)
+        fts = context.deps.get("fts") if context is not None else None
+        if fts is not None:  # 全文槽位索引（bm25 召回面；硬遗忘时级联移除）
+            fts.index("entries", entry.entry_id, entry.object_value)
     _link_episode(store, input.get("episode_id", ""))
     output["entry_ids"] = entry_ids
     metrics.counter("organize.entries", len(entry_ids))

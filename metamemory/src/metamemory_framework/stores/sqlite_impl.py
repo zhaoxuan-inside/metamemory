@@ -219,6 +219,11 @@ class SqliteFullTextStore:
             "INSERT OR REPLACE INTO fts_docs(ns, doc_id, text) VALUES(?,?,?)",
             (ns, doc_id, " ".join(_cjk_bigrams(text))))
 
+    def remove(self, ns: str, doc_id: str) -> int:
+        """硬遗忘级联：索引同步移除（唯一真删除不留残迹）。"""
+        cur = self.db.execute("DELETE FROM fts_docs WHERE ns=? AND doc_id=?", (ns, doc_id))
+        return cur.rowcount
+
     def search(self, ns: str, query: str, k: int = 10) -> list[dict]:
         tokens = _cjk_bigrams(query)
         if not tokens:
@@ -240,6 +245,11 @@ class SqliteGraphStore:
         self.db.execute(
             "INSERT OR REPLACE INTO graph_edges(src, dst, edge_type, props) VALUES(?,?,?,?)",
             (src, dst, edge_type, _dump(props)))
+
+    def remove_node(self, node_id: str) -> int:
+        cur = self.db.execute(
+            "DELETE FROM graph_edges WHERE src=? OR dst=?", (node_id, node_id))
+        return cur.rowcount
 
     def walk(self, src: str, edge_types: list[str], depth: int = 2) -> list[dict]:
         seen: set[str] = {src}
@@ -279,6 +289,12 @@ class SqliteVectorStore:
                 (ns, doc_id, vec_to_blob(vec)))
             if ns in self._loaded:
                 self._cache.setdefault(ns, {})[doc_id] = vec
+
+    def remove(self, ns: str, doc_id: str) -> int:
+        cur = self.db.execute("DELETE FROM vectors WHERE ns=? AND doc_id=?", (ns, doc_id))
+        if ns in self._cache:
+            self._cache[ns].pop(doc_id, None)
+        return cur.rowcount
 
     def search(self, ns: str, query: list[float], k: int = 10) -> list[dict]:
         if ns not in self._loaded:
