@@ -14,7 +14,7 @@ CONTRACT = json.loads((ROOT / "contracts" / "ingest_extract_deep.json").read_tex
 
 class TestFlows(unittest.TestCase):
     def setUp(self):
-        self.composition = bootstrap.build_composition()
+        self.composition = bootstrap.build_composition(db_path=":memory:")  # 实例隔离
 
     def test_all_flows_load_and_validate(self):
         self.assertIn("ingest", self.composition["flows"])

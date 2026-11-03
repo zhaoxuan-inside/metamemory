@@ -14,20 +14,22 @@ class AuthzRegistry:
         self.store = store
 
     def grant(self, grantee: str, object_ref: str, level: str, purpose: str,
-              allowed_purposes: list[str] | None = None, ttl_seconds: int | None = None) -> AuthorizationRecord:
+              allowed_purposes: list[str] | None = None, ttl_seconds: int | None = None,
+              tenant_id: str = "", domain_id: str = "") -> AuthorizationRecord:
         record = AuthorizationRecord(
             auth_id=self.store.next_id("auth"), grantee=grantee, object_ref=object_ref,
             level=level, purpose=purpose, allowed_purposes=allowed_purposes or [purpose],
             expires_at=time.time() + ttl_seconds if ttl_seconds else None,
+            tenant_id=tenant_id, domain_id=domain_id,
         )
-        self.store.authz[record.auth_id] = record
-        return record
+        return self.store.save_authz(record)
 
     def revoke(self, auth_id: str) -> bool:
         record = self.store.authz.get(auth_id)
         if record is None or record.status != "active":
             return False
         record.status = "revoked"  # 撤回幂等：停止未来检索
+        self.store.save_authz(record)
         return True
 
     def active_for(self, grantee: str, object_ref: str) -> AuthorizationRecord | None:
@@ -38,6 +40,7 @@ class AuthzRegistry:
                 continue
             if record.expires_at is not None and record.expires_at < time.time():
                 record.status = "expired"  # 到期惰性判定
+                self.store.save_authz(record)
                 continue
             return record
         return None

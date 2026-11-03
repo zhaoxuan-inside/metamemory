@@ -20,7 +20,7 @@ class _FakeProvider:
 
 class TestBootstrapEndToEnd(unittest.TestCase):
     def setUp(self):
-        self.composition = bootstrap.build_composition()
+        self.composition = bootstrap.build_composition(db_path=":memory:")  # 实例隔离
         self.composition["inference"] = _FakeProvider()  # 测试替身：模拟已配置的强模型网关
         set_tenant(mk_tenant())
 

@@ -22,3 +22,8 @@ logs/
 
 # 控制台运行时状态
 metamemory_console/console_state.json
+
+# 三分离·数据侧：运行时数据目录（SQLite 真源），代码目录零数据
+metamemory/var/
+# 三分离·配置侧：运行时配置文件（模板见 metamemory/config/metamemory.example.json）
+metamemory/config/metamemory.json

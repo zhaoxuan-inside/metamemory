@@ -86,6 +86,8 @@ def _fulltext_path(store: MemoryStore, tokens: set[str]) -> list[dict]:
     """
     hits = []
     for entry in store.entries.values():
+        if entry.gray_forgotten:  # 灰色遗忘：降权条目退出检索面（可恢复）
+            continue
         overlap = len(tokens & _tokenize(entry.object_value.lower()))
         if overlap:
             hits.append(_candidate(entry, overlap / (len(tokens) or 1)))
@@ -112,7 +114,7 @@ def _graph_path(store: MemoryStore, tokens: set[str]) -> list[dict]:
 def _timeline_path(store: MemoryStore, tokens: set[str], since: float | None) -> list[dict]:
     """时间线路：近期记忆 + 最小词面相关（拒答语义：无关查询不得凑数返回）。"""
     cutoff = since if since is not None else time.time() - 86400 * 30
-    recent = [e for e in store.entries.values() if e.learned_at >= cutoff]
+    recent = [e for e in store.entries.values() if e.learned_at >= cutoff and not e.gray_forgotten]
     recent.sort(key=lambda e: e.learned_at, reverse=True)
     hits = []
     for e in recent:
@@ -125,4 +127,4 @@ def _context_path(store: MemoryStore, episode_ref: str | None) -> list[dict]:
     """情境触发：episode 成员整体复活（编码特异性）。"""
     if not episode_ref:
         return []
-    return [_candidate(e, 0.8) for e in store.entries_of(episode_ref)]
+    return [_candidate(e, 0.8) for e in store.entries_of(episode_ref) if not e.gray_forgotten]

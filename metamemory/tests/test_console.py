@@ -2,6 +2,7 @@
 import json
 import unittest
 import urllib.request
+from pathlib import Path
 from threading import Thread
 
 _OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))  # 内部直连，绕过环境代理
@@ -29,7 +30,11 @@ class TestConsole(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.app = ConsoleApp()
+        import tempfile
+
+        cls._tmpdir = tempfile.TemporaryDirectory()  # 三分离：测试配置/数据落临时目录
+        cls.app = ConsoleApp(config_file=Path(cls._tmpdir.name) / "console_config.json",
+                             db_path=":memory:")
         cls.app.composition["inference"] = _FakeGateway()
         from http.server import ThreadingHTTPServer
 

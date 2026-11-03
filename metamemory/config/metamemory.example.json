@@ -1,0 +1,42 @@
+{
+  "_说明": "MetaMemory 配置模板（三分离·配置侧）。生效方式：复制为同目录 metamemory.json，或设 METAMEMORY_CONFIG 指向任意路径；环境变量 METAMEMORY_* 可覆盖标量。值含义见 _03/_05 与 config.py 注释。",
+  "profile": "lite",
+  "quota": {
+    "max_pending_events": 10000,
+    "discovery_slots_free": 3,
+    "discovery_slots_pro": null
+  },
+  "storage": {
+    "data_dir": "",
+    "db_filename": "metamemory.db"
+  },
+  "inference": {
+    "base_url": "",
+    "api_key": "",
+    "model": "",
+    "embedding_model": "",
+    "rerank_model": "",
+    "timeout_seconds": 60,
+    "prompt_version": "v1",
+    "nli_prompt_version": "v1"
+  },
+  "recall": {
+    "top_k": 10,
+    "token_budget": 2048,
+    "rrf_k": 60,
+    "default_intent": "fact"
+  },
+  "memory": {
+    "reconsolidation_window_hours": 72,
+    "segment_param_version": "seg-v0",
+    "worthiness_high": 3,
+    "worthiness_mid": 1,
+    "low_confidence_floor": 0.3
+  },
+  "governance": {
+    "audit_retention_domain_days": 180,
+    "review_queue_enabled": true,
+    "purpose_gate_enforced": true,
+    "publish_withdraw_window_hours": 72
+  }
+}

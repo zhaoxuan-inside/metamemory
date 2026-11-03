@@ -44,8 +44,10 @@ def _invoke_with_policy(step, input, output, context, tenant, metrics, evolution
                 _flatten(values, input, output, context, tenant, metrics, evolution)
             return ok
         except _TYPED as typed:
+            metrics.counter("fw_errors_total")
             decision = _apply_policy(typed, input, output, metrics, evolution)
             if decision == "retry" and attempts <= _max_attempts(input):
+                metrics.counter("fw_retry_total")
                 continue
             if decision == "fallback":
                 return _run_fallback(input, output, context, tenant, metrics, evolution)

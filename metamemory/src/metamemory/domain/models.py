@@ -63,6 +63,9 @@ class MemoryEntry:
     strength: float = 1.0
     last_recall_at: float | None = None
     injected_suspect: bool = False
+    embedding: list[float] | None = None    # 语义向量（网关 embeddings，落库 BLOB）
+    embedding_model: str = ""
+    gray_forgotten: bool = False            # 灰色遗忘降权（manage.forget gray，可恢复）
 
 
 @dataclass
@@ -88,6 +91,9 @@ class IntentRecord:
     ttl_expires_at: str | None = None
     visibility: str = "L1"
     expected_response: str = "solution"
+    origin: str = "declared"  # declared 声明直生效 | agent_candidate Agent 只产候选
+    created_at: float = field(default_factory=time.time)
+    updated_at: float = field(default_factory=time.time)
 
 
 @dataclass
@@ -102,6 +108,9 @@ class AuthorizationRecord:
     allowed_purposes: list[str] = field(default_factory=list)
     expires_at: float | None = None
     status: str = "active"  # active|revoked|expired
+    tenant_id: str = ""
+    domain_id: str = ""
+    created_at: float = field(default_factory=time.time)
 
 
 @dataclass
@@ -114,3 +123,5 @@ class PublishedItem:
     allowed_purposes: list[str]
     review_status: str = "draft"
     published_at: float | None = None
+    withdraw_deadline: float | None = None  # 72h 无痕撤回窗（§11.1-②）
+    summary: str = ""                       # L4 抽象投影（生成/发布分离）

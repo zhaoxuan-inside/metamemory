@@ -74,10 +74,26 @@ def protocol_search(input: dict, output: dict, context, tenant, metrics, evoluti
     budget_pack({"items": arb_out.get("allowed", [])[:top_k],
                  "token_budget": input.get("token_budget", 2048)},
                 packed, context, tenant, metrics, evolution)
+    _touch_recalled(context, packed.get("packed") or [])  # 检索命中重置再巩固窗口锚点（数据流不变式⑤）
     output["items"] = packed.get("packed", [])
     output["denials"] = arb_out.get("denials", [])
     output["unanswered"] = {"reason": "NO_MATCH"} if not packed.get("packed") else None
     return True
+
+
+def _touch_recalled(context, packed: list) -> None:
+    """检索命中写回：last_recall_at=now（再巩固窗口 72h 起算），经 store 写穿。"""
+    import time
+
+    store = context.deps.get("store")
+    touch = getattr(store, "touch_entry", None)
+    if touch is None:
+        return
+    for item in packed:
+        entry = store.entries.get(item.get("memory_id", ""))
+        if entry is not None:
+            entry.last_recall_at = time.time()
+            touch(entry)
 
 
 def _to_ranked(candidates: list) -> dict:

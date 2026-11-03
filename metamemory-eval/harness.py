@@ -194,9 +194,15 @@ def run_injection_suite(composition: dict, records: list[dict]) -> dict:
             "missed_ids": missed}
 
 
-def run_all(datasets_dir: Path | None = None) -> dict:
+def run_all(datasets_dir: Path | None = None, data_dir: str | None = None) -> dict:
     datasets = datasets_dir or EVAL_ROOT / "datasets"
-    composition = bootstrap.build_composition()
+    # 三分离：评测是测试工件，数据面落独立临时目录（不污染运行档 var/，可重复播种）
+    import tempfile
+
+    from metamemory.config import MetaMemoryConfig, StorageConfig
+
+    cfg = MetaMemoryConfig(storage=StorageConfig(data_dir=data_dir or tempfile.mkdtemp(prefix="metamemory-eval-")))
+    composition = bootstrap.build_composition(config=cfg)
     composition["inference"] = RuleExtractionProvider()  # 评测运行统一使用替身（非系统路径）
     report = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),

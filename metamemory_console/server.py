@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import sys
-from dataclasses import asdict
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -20,34 +20,45 @@ for p in (str(REPO / "metamemory"), str(REPO / "metamemory" / "src"),
         sys.path.insert(0, p)
 
 import bootstrap  # noqa: E402
-from metamemory.config import MetaMemoryConfig, load_config  # noqa: E402
+from metamemory.config import CONFIG_FILE, MetaMemoryConfig, discover_config_file, load_config  # noqa: E402
 from metamemory_framework.adapters.inference import load_provider  # noqa: E402
 from metamemory_framework.container.types import Evolution  # noqa: E402
 from metamemory_framework.observe.metrics import MetricsImpl  # noqa: E402
 from metamemory_framework.security.context import make_tenant, set_tenant  # noqa: E402
 
-STATE_FILE = CONSOLE_ROOT / "console_state.json"
+
+def _now_iso() -> str:
+    """受理时间缺省=当下（世界时间锚点，ISO8601 带时区）。"""
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
 class ConsoleApp:
-    """控制台应用：持有一个组合根实例，全部 API 围绕它读写。"""
+    """控制台应用：持有一个组合根实例，全部 API 围绕它读写。
 
-    def __init__(self) -> None:
-        self.composition = bootstrap.build_composition()
-        self.config: MetaMemoryConfig = load_config()
-        self.composition["config"] = self.config.to_dict()
-        saved = self._load_state()
+    配置持久化落 config 文件（三分离·配置侧：与 load_config 的发现路径同一文件），
+    数据面经组合根落 SQLite 数据目录（三分离·数据侧）；代码目录零数据零配置。
+    """
+
+    def __init__(self, config: MetaMemoryConfig | None = None,
+                 config_file: Path | None = None, db_path: str | None = None) -> None:
+        self.config_file = Path(config_file) if config_file else (
+            discover_config_file() or CONFIG_FILE)
+        self.composition = bootstrap.build_composition(config=config, db_path=db_path)
+        self.config = self.composition_config()
+        saved = self._load_saved_config()
         if saved:
             self.apply_config(saved, persist=False)
 
-    @staticmethod
-    def _load_state() -> dict | None:
-        if STATE_FILE.exists():
-            try:
-                return json.loads(STATE_FILE.read_text(encoding="utf-8"))
-            except json.JSONDecodeError:
-                return None
-        return None
+    def composition_config(self) -> MetaMemoryConfig:
+        return MetaMemoryConfig.from_dict(self.composition["config"])
+
+    def _load_saved_config(self) -> dict | None:
+        if not self.config_file.is_file():
+            return None
+        try:
+            return json.loads(self.config_file.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return None
 
     def apply_config(self, data: dict, persist: bool = True) -> dict:
         """可视化配置落点：更新运行时配置与推理网关（改 base_url/model 即生效）。"""
@@ -55,8 +66,9 @@ class ConsoleApp:
         self.composition["config"] = self.config.to_dict()
         self.composition["inference"] = load_provider(self.config.to_dict()["inference"])
         if persist:
-            STATE_FILE.write_text(json.dumps(self.config.to_dict(), ensure_ascii=False, indent=2),
-                                  encoding="utf-8")
+            self.config_file.parent.mkdir(parents=True, exist_ok=True)
+            self.config_file.write_text(json.dumps(self.config.to_dict(), ensure_ascii=False, indent=2),
+                                        encoding="utf-8")
         return self.config.to_dict()
 
     def state(self) -> dict:
@@ -121,7 +133,7 @@ class ConsoleApp:
         out: dict = {}
         event = {"source_uri": body.get("source_uri") or f"console://{body.get('content', '')[:32]}",
                  "content": body.get("content", ""), "actor": body.get("actor", "console"),
-                 "occurred_at": body.get("occurred_at", "2026-09-27T10:00:00+08:00")}
+                 "occurred_at": body.get("occurred_at") or _now_iso()}
         if not comp["protocol"]["add"]({"event": event}, out, context, tenant, metrics, evolution):
             return {"ok": False, "error": evolution.reason_code, "reason": evolution.reason}
         task_out: dict = {}

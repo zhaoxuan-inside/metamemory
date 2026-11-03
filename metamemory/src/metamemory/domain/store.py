@@ -5,11 +5,23 @@ full 档由 DataStore/VectorStore/GraphStore 槽位实现替换，仓储接口�
 """
 from __future__ import annotations
 
-from .models import AssociationEdge, AuthorizationRecord, MemoryEntry, MemoryEpisode, PublishedItem, Segment
+from .models import (
+    AssociationEdge,
+    AuthorizationRecord,
+    IntentRecord,
+    MemoryEntry,
+    MemoryEpisode,
+    PublishedItem,
+    Segment,
+)
 
 
 class MemoryStore:
-    """核心层数据资产容器（进程内真源；接口与 full 档仓储对齐）。"""
+    """核心层数据资产容器（进程内真源；接口与 full 档仓储对齐）。
+
+    lite 运行档由 persist.PersistentMemoryStore（SQLite 写穿 + 内存索引）承载同一接口；
+    本进程内实现供单测与纯内存场景——不是运行档数据面（三分离：数据只落数据目录）。
+    """
 
     def __init__(self) -> None:
         self.episodes: dict[str, MemoryEpisode] = {}
@@ -18,6 +30,7 @@ class MemoryStore:
         self.edges: list[AssociationEdge] = []
         self.authz: dict[str, AuthorizationRecord] = {}
         self.published: dict[str, PublishedItem] = {}
+        self.intents: dict[str, IntentRecord] = {}
         self.by_uri: dict[str, str] = {}
         self.dedupe: dict[str, list[str]] = {}
         self.seq = 0
@@ -62,3 +75,20 @@ class MemoryStore:
 
     def entries_of(self, episode_id: str) -> list[MemoryEntry]:
         return [e for e in self.entries.values() if e.anchor_episode == episode_id]
+
+    # ---- 授权/发布/意图（写面统一走 save_*：内存实现就地落 dict，持久实现写穿 SQLite）----
+
+    def save_authz(self, record: AuthorizationRecord) -> AuthorizationRecord:
+        self.authz[record.auth_id] = record
+        return record
+
+    def save_published(self, item: PublishedItem) -> PublishedItem:
+        self.published[item.item_id] = item
+        return item
+
+    def save_intent(self, intent: IntentRecord) -> IntentRecord:
+        self.intents[intent.entry_id] = intent
+        return intent
+
+    def get_intent(self, entry_id: str) -> IntentRecord | None:
+        return self.intents.get(entry_id)
