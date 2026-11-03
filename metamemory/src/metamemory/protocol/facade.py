@@ -85,7 +85,10 @@ def protocol_search(input: dict, output: dict, context, tenant, metrics, evoluti
                  "token_budget": input.get("token_budget", 2048)},
                 packed, context, tenant, metrics, evolution)
     _touch_recalled(context, packed.get("packed") or [])  # 检索命中重置再巩固窗口锚点（数据流不变式⑤）
-    output["items"] = packed.get("packed", [])
+    items = packed.get("packed", [])
+    if input.get("verify"):  # API-004 精确验证模式：逐条附 NLI 判定与引文证据
+        _attach_verification(items, input["query"], context, tenant, metrics)
+    output["items"] = items
     output["denials"] = arb_out.get("denials", [])
     output["unanswered"] = {"reason": "NO_MATCH"} if not packed.get("packed") else None
     audit = context.deps.get("audit")  # 读取路径审计：全量不采样（US-7）
@@ -98,6 +101,35 @@ def protocol_search(input: dict, output: dict, context, tenant, metrics, evoluti
         ledger.record(tenant.tenant_id, "search.served", 1, source="protocol.search")
     metrics.counter("search.served")
     return True
+
+
+def _attach_verification(items: list, query: str, context, tenant, metrics) -> None:
+    """精确验证：断言（query 即断言）对每条内容做 NLI，附引文证据。
+
+    网关缺席 = 逐条显式标注 unavailable（不静默伪装成已验证；检索本体不受影响）。
+    """
+    from ..ingest.extract import verify_entailment
+
+    for item in items:
+        verdict: dict = {}
+        try:
+            verify_entailment({"atom_text": query, "span_text": item.get("content", "")},
+                              verdict, context, tenant, metrics, _QuietEvo())
+            item["entailment"] = {"verdict": verdict.get("verdict"),
+                                  "confidence": verdict.get("confidence"),
+                                  "anchor": item.get("span")}
+        except Exception as exc:  # DependencyError（网关缺席/故障）→ 显式标注
+            item["entailment"] = {"verdict": "unavailable",
+                                  "reason": type(exc).__name__}
+
+
+class _QuietEvo:
+    ok = True
+    reason_code = None
+    reason = None
+    retryable = False
+    suggestions: list = []
+    cause: list = []
 
 
 def _touch_recalled(context, packed: list) -> None:

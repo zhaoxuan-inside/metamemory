@@ -24,7 +24,8 @@
     "top_k": 10,
     "token_budget": 2048,
     "rrf_k": 60,
-    "default_intent": "fact"
+    "default_intent": "fact",
+    "semantic_min_score": 0.5
   },
   "memory": {
     "reconsolidation_window_hours": 72,
@@ -38,5 +39,11 @@
     "review_queue_enabled": true,
     "purpose_gate_enforced": true,
     "publish_withdraw_window_hours": 72
+  },
+  "notify": {
+    "webhook_url": "",
+    "webhook_secret": "",
+    "webhook_max_attempts": 5,
+    "webhook_timeout_seconds": 10
   }
 }

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-10-01T00:17:08+00:00",
+  "updated_at": "2026-11-03T16:39:17+00:00",
   "methods": [
     {
       "id": "m-001",
@@ -68,6 +68,66 @@
     },
     {
       "id": "m-005",
+      "signature": "boolean compress_fold(input, output, context, tenant, metrics, evolution)",
+      "name": "compress_fold",
+      "category": "data",
+      "layer": "core",
+      "module": "consolidate",
+      "location": "",
+      "description": "折叠积压盘点：fold/keep_raw 只在原文层的完备率信号（R3 双指标）",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-006",
+      "signature": "boolean graph_cleanup(input, output, context, tenant, metrics, evolution)",
+      "name": "graph_cleanup",
+      "category": "data",
+      "layer": "core",
+      "module": "consolidate",
+      "location": "",
+      "description": "图完整性：孤悬边清理（端点已亡的边）",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-007",
+      "signature": "boolean pattern_induce(input, output, context, tenant, metrics, evolution)",
+      "name": "pattern_induce",
+      "category": "orchestration",
+      "layer": "core",
+      "module": "consolidate",
+      "location": "",
+      "description": "S4 模式原子归纳：巩固收益门 R1（复用频次≥3）+ derived 血缘回连",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-008",
+      "signature": "boolean strength_refresh(input, output, context, tenant, metrics, evolution)",
+      "name": "strength_refresh",
+      "category": "data",
+      "layer": "core",
+      "module": "consolidate",
+      "location": "",
+      "description": "强度衰减重算 f(重复,检索,情感)×e^(-λ·Δt)；检索命中即再巩固锚点",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-009",
       "signature": "boolean extract_by_mappings(input, output, context, tenant, metrics, evolution)",
       "name": "extract_by_mappings",
       "category": "data",
@@ -82,7 +142,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-006",
+      "id": "m-010",
       "signature": "boolean flatten_by_mappings(input, output, context, tenant, metrics, evolution)",
       "name": "flatten_by_mappings",
       "category": "data",
@@ -97,7 +157,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-007",
+      "id": "m-011",
       "signature": "boolean check_no_silent_default(input, output, context, tenant, metrics, evolution)",
       "name": "check_no_silent_default",
       "category": "data",
@@ -112,7 +172,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-008",
+      "id": "m-012",
       "signature": "boolean detect_cycle(input, output, context, tenant, metrics, evolution)",
       "name": "detect_cycle",
       "category": "algorithm",
@@ -127,7 +187,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-009",
+      "id": "m-013",
       "signature": "boolean run_flow(input, output, context, tenant, metrics, evolution)",
       "name": "run_flow",
       "category": "orchestration",
@@ -137,14 +197,14 @@
       "description": "lite 内嵌执行器：就绪调度/条件推进/检查点/abstain 只汇入 review 类节点",
       "reusable": false,
       "dependencies": [
-        "m-011"
+        "m-015"
       ],
       "tests": "metamemory/tests/test_graph.py",
       "deprecated": false,
       "replaced_by": null
     },
     {
-      "id": "m-010",
+      "id": "m-014",
       "signature": "boolean validate_graph(input, output, context, tenant, metrics, evolution)",
       "name": "validate_graph",
       "category": "orchestration",
@@ -154,15 +214,15 @@
       "description": "编译期校验汇总（图约束①-⑤），不过则拒绝发布",
       "reusable": false,
       "dependencies": [
-        "m-008",
-        "m-007"
+        "m-012",
+        "m-011"
       ],
       "tests": "metamemory/tests/test_graph.py",
       "deprecated": false,
       "replaced_by": null
     },
     {
-      "id": "m-011",
+      "id": "m-015",
       "signature": "boolean run_step(input, output, context, tenant, metrics, evolution)",
       "name": "run_step",
       "category": "orchestration",
@@ -172,15 +232,15 @@
       "description": "五段执行：提取→操作→拍平→异常策略处置（retry/fallback/reply/abstain/dead_letter）",
       "reusable": false,
       "dependencies": [
-        "m-005",
-        "m-006"
+        "m-009",
+        "m-010"
       ],
       "tests": "metamemory/tests/test_container.py",
       "deprecated": false,
       "replaced_by": null
     },
     {
-      "id": "m-012",
+      "id": "m-016",
       "signature": "boolean anchor_span(input, output, context, tenant, metrics, evolution)",
       "name": "anchor_span",
       "category": "algorithm",
@@ -195,7 +255,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-013",
+      "id": "m-017",
       "signature": "boolean dedupe_route(input, output, context, tenant, metrics, evolution)",
       "name": "dedupe_route",
       "category": "data",
@@ -210,7 +270,22 @@
       "replaced_by": null
     },
     {
-      "id": "m-014",
+      "id": "m-018",
+      "signature": "boolean embed_entries(input, output, context, tenant, metrics, evolution)",
+      "name": "embed_entries",
+      "category": "data",
+      "layer": "core",
+      "module": "ingest",
+      "location": "metamemory/src/metamemory/ingest/embedding.py",
+      "description": "语义向量落库：网关 embeddings 批量嵌入→向量槽位+条目双写；未配置=显式关闭",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_m2.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-019",
       "signature": "boolean extract_deep(input, output, context, tenant, metrics, evolution)",
       "name": "extract_deep",
       "category": "orchestration",
@@ -220,15 +295,15 @@
       "description": "深提取编排：强模型命题化，逐原子补锚定与 NLI 判定",
       "reusable": false,
       "dependencies": [
-        "m-012",
-        "m-022"
+        "m-016",
+        "m-027"
       ],
       "tests": "metamemory/tests/test_ingest.py",
       "deprecated": false,
       "replaced_by": null
     },
     {
-      "id": "m-015",
+      "id": "m-020",
       "signature": "boolean fastpath_store(input, output, context, tenant, metrics, evolution)",
       "name": "fastpath_store",
       "category": "data",
@@ -243,7 +318,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-016",
+      "id": "m-021",
       "signature": "boolean normalize_event(input, output, context, tenant, metrics, evolution)",
       "name": "normalize_event",
       "category": "data",
@@ -258,7 +333,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-017",
+      "id": "m-022",
       "signature": "boolean organize_links(input, output, context, tenant, metrics, evolution)",
       "name": "organize_links",
       "category": "orchestration",
@@ -273,7 +348,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-018",
+      "id": "m-023",
       "signature": "boolean pre_gate(input, output, context, tenant, metrics, evolution)",
       "name": "pre_gate",
       "category": "data",
@@ -288,7 +363,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-019",
+      "id": "m-024",
       "signature": "boolean route_score(input, output, context, tenant, metrics, evolution)",
       "name": "route_score",
       "category": "data",
@@ -303,7 +378,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-020",
+      "id": "m-025",
       "signature": "boolean segment_units(input, output, context, tenant, metrics, evolution)",
       "name": "segment_units",
       "category": "data",
@@ -318,7 +393,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-021",
+      "id": "m-026",
       "signature": "boolean select_worthiness(input, output, context, tenant, metrics, evolution)",
       "name": "select_worthiness",
       "category": "data",
@@ -333,7 +408,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-022",
+      "id": "m-027",
       "signature": "boolean verify_entailment(input, output, context, tenant, metrics, evolution)",
       "name": "verify_entailment",
       "category": "data",
@@ -348,44 +423,181 @@
       "replaced_by": null
     },
     {
-      "id": "m-023",
+      "id": "m-028",
+      "signature": "boolean intent_confirm(input, output, context, tenant, metrics, evolution)",
+      "name": "intent_confirm",
+      "category": "data",
+      "layer": "core",
+      "module": "intent",
+      "location": "",
+      "description": "意图确认卡片人裁：候选→active / 拒绝→completed（唯一确认链）",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-029",
+      "signature": "boolean intent_declare(input, output, context, tenant, metrics, evolution)",
+      "name": "intent_declare",
+      "category": "orchestration",
+      "layer": "core",
+      "module": "intent",
+      "location": "",
+      "description": "意图声明双入口：declared 直生效 / agent_candidate 只产候选；发现位配额 G3",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-030",
+      "signature": "boolean intent_sweep_expiry(input, output, context, tenant, metrics, evolution)",
+      "name": "intent_sweep_expiry",
+      "category": "data",
+      "layer": "core",
+      "module": "intent",
+      "location": "",
+      "description": "意图到期扫描：active+ttl 过期→expired，退出发现索引",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-031",
+      "signature": "boolean intent_update(input, output, context, tenant, metrics, evolution)",
+      "name": "intent_update",
+      "category": "data",
+      "layer": "core",
+      "module": "intent",
+      "location": "",
+      "description": "意图三旋钮调整：有效期/可见性滑杆/期望回应（升入网络占位检查）",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-032",
+      "signature": "boolean manage_authz(input, output, context, tenant, metrics, evolution)",
+      "name": "manage_authz",
+      "category": "orchestration",
+      "layer": "core",
+      "module": "manage",
+      "location": "",
+      "description": "授权三元组 grant/revoke：撤回幂等（二次撤回显式失败）",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-033",
+      "signature": "boolean manage_correct(input, output, context, tenant, metrics, evolution)",
+      "name": "manage_correct",
+      "category": "orchestration",
+      "layer": "core",
+      "module": "manage",
+      "location": "",
+      "description": "纠错：S1 新原子 supersedes 旧原子 + 血缘 BFS 下游 stale→recompute",
+      "reusable": false,
+      "dependencies": [
+        "m-045"
+      ],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-034",
+      "signature": "boolean manage_forget(input, output, context, tenant, metrics, evolution)",
+      "name": "manage_forget",
+      "category": "orchestration",
+      "layer": "core",
+      "module": "manage",
+      "location": "",
+      "description": "遗忘双轨：gray 降权可恢复 / hard 物理删除+索引级联（唯一真删除）",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-035",
+      "signature": "boolean manage_visibility(input, output, context, tenant, metrics, evolution)",
+      "name": "manage_visibility",
+      "category": "orchestration",
+      "layer": "core",
+      "module": "manage",
+      "location": "",
+      "description": "视野变更：升档需确认（HMAC token）/降档即生效；L4/L5 发布投影；降档即撤回",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-036",
       "signature": "boolean protocol_add(input, output, context, tenant, metrics, evolution)",
       "name": "protocol_add",
       "category": "orchestration",
       "layer": "core",
       "module": "protocol",
-      "location": "metamemory/src/metamemory/protocol/facade.py",
+      "location": "metamemory/src/metamemory/protocol/intents.py",
       "description": "add 门面：配额→幂等→快通道→同事务入队（202 受理语义）",
       "reusable": false,
       "dependencies": [
-        "m-015"
+        "m-020"
       ],
       "tests": "metamemory/tests/test_protocol.py",
       "deprecated": false,
       "replaced_by": null
     },
     {
-      "id": "m-024",
+      "id": "m-037",
       "signature": "boolean protocol_search(input, output, context, tenant, metrics, evolution)",
       "name": "protocol_search",
       "category": "orchestration",
       "layer": "core",
       "module": "protocol",
-      "location": "metamemory/src/metamemory/protocol/facade.py",
+      "location": "metamemory/src/metamemory/protocol/intents.py",
       "description": "search 门面：召回→RRF→裁决→预算组装（key 即查询者）",
       "reusable": false,
       "dependencies": [
-        "m-027",
-        "m-028",
+        "m-041",
+        "m-043",
         "m-002",
-        "m-025"
+        "m-039"
       ],
       "tests": "metamemory/tests/test_protocol.py",
       "deprecated": false,
       "replaced_by": null
     },
     {
-      "id": "m-025",
+      "id": "m-038",
+      "signature": "boolean generate_l4(input, output, context, tenant, metrics, evolution)",
+      "name": "generate_l4",
+      "category": "orchestration",
+      "layer": "core",
+      "module": "publish",
+      "location": "",
+      "description": "L4 抽象投影生成（生成/发布分离）：网关摘要→published；缺席保留 draft 显式 pending",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_api.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-039",
       "signature": "boolean budget_pack(input, output, context, tenant, metrics, evolution)",
       "name": "budget_pack",
       "category": "algorithm",
@@ -400,7 +612,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-026",
+      "id": "m-040",
       "signature": "boolean merge_candidates(input, output, context, tenant, metrics, evolution)",
       "name": "merge_candidates",
       "category": "data",
@@ -415,7 +627,7 @@
       "replaced_by": null
     },
     {
-      "id": "m-027",
+      "id": "m-041",
       "signature": "boolean query_recall(input, output, context, tenant, metrics, evolution)",
       "name": "query_recall",
       "category": "orchestration",
@@ -425,14 +637,31 @@
       "description": "五路并行召回编排（fulltext/semantic/graph/timeline/context）",
       "reusable": false,
       "dependencies": [
-        "m-026"
+        "m-040"
       ],
       "tests": "metamemory/tests/test_query.py",
       "deprecated": false,
       "replaced_by": null
     },
     {
-      "id": "m-028",
+      "id": "m-042",
+      "signature": "boolean rerank(input, output, context, tenant, metrics, evolution)",
+      "name": "rerank",
+      "category": "orchestration",
+      "layer": "core",
+      "module": "query",
+      "location": "metamemory/src/metamemory/query/rerank.py",
+      "description": "精排（最佳路径组件）：rerank_model 配置即启用的 LLM 点式打分重排；未配置=RRF 直出",
+      "reusable": false,
+      "dependencies": [
+        "m-043"
+      ],
+      "tests": "metamemory/tests/test_m2.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-043",
       "signature": "boolean rrf_fuse(input, output, context, tenant, metrics, evolution)",
       "name": "rrf_fuse",
       "category": "algorithm",
@@ -445,14 +674,74 @@
       "tests": "metamemory/tests/test_query.py",
       "deprecated": false,
       "replaced_by": null
+    },
+    {
+      "id": "m-044",
+      "signature": "boolean recompute_clear_stale(input, output, context, tenant, metrics, evolution)",
+      "name": "recompute_clear_stale",
+      "category": "data",
+      "layer": "core",
+      "module": "recompute",
+      "location": "",
+      "description": "血缘回溯收尾：残留 stale 标记归零（幂等）",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-045",
+      "signature": "boolean recompute_collect_stale(input, output, context, tenant, metrics, evolution)",
+      "name": "recompute_collect_stale",
+      "category": "data",
+      "layer": "core",
+      "module": "recompute",
+      "location": "",
+      "description": "血缘回溯第一步：汇总 stale 标记清单（崩溃可续）",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-046",
+      "signature": "boolean recompute_recompute_one(input, output, context, tenant, metrics, evolution)",
+      "name": "recompute_recompute_one",
+      "category": "data",
+      "layer": "core",
+      "module": "recompute",
+      "location": "",
+      "description": "逐条重算（work-queue 语义）：模式原子置信随源重算后清标记",
+      "reusable": false,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_governance.py",
+      "deprecated": false,
+      "replaced_by": null
+    },
+    {
+      "id": "m-047",
+      "signature": "boolean cosine_top_k(input, output, context, tenant, metrics, evolution)",
+      "name": "cosine_top_k",
+      "category": "algorithm",
+      "layer": "framework",
+      "module": "stores",
+      "location": "metamemory/src/metamemory_framework/stores/fallbacks.py",
+      "description": "余弦相似 top-k（纯计算，内存向量降级实现）",
+      "reusable": true,
+      "dependencies": [],
+      "tests": "metamemory/tests/test_stores.py",
+      "deprecated": false,
+      "replaced_by": null
     }
   ],
   "stats": {
-    "total": 28,
+    "total": 47,
     "by_category": {
-      "algorithm": 4,
-      "orchestration": 9,
-      "data": 15
+      "algorithm": 5,
+      "orchestration": 17,
+      "data": 25
     }
   }
 }

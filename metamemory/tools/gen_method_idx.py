@@ -44,6 +44,24 @@ META = {
     "query_recall": ("五路并行召回编排（fulltext/semantic/graph/timeline/context）", False, "test_query.py", ["merge_candidates"]),
     "rrf_fuse": ("RRF 融合：1/(k+rank) 按排名求和，不依赖分数量纲", True, "test_query.py", []),
     "budget_pack": ("Token 预算内贪心装入，落选计数透出", True, "test_query.py", []),
+    "rerank": ("精排（最佳路径组件）：rerank_model 配置即启用的 LLM 点式打分重排；未配置=RRF 直出", False, "test_m2.py", ["rrf_fuse"]),
+    "embed_entries": ("语义向量落库：网关 embeddings 批量嵌入→向量槽位+条目双写；未配置=显式关闭", False, "test_m2.py", []),
+    "strength_refresh": ("强度衰减重算 f(重复,检索,情感)×e^(-λ·Δt)；检索命中即再巩固锚点", False, "test_governance.py", []),
+    "compress_fold": ("折叠积压盘点：fold/keep_raw 只在原文层的完备率信号（R3 双指标）", False, "test_governance.py", []),
+    "pattern_induce": ("S4 模式原子归纳：巩固收益门 R1（复用频次≥3）+ derived 血缘回连", False, "test_governance.py", []),
+    "graph_cleanup": ("图完整性：孤悬边清理（端点已亡的边）", False, "test_governance.py", []),
+    "manage_correct": ("纠错：S1 新原子 supersedes 旧原子 + 血缘 BFS 下游 stale→recompute", False, "test_governance.py", ["recompute_collect_stale"]),
+    "manage_visibility": ("视野变更：升档需确认（HMAC token）/降档即生效；L4/L5 发布投影；降档即撤回", False, "test_governance.py", []),
+    "manage_authz": ("授权三元组 grant/revoke：撤回幂等（二次撤回显式失败）", False, "test_governance.py", []),
+    "manage_forget": ("遗忘双轨：gray 降权可恢复 / hard 物理删除+索引级联（唯一真删除）", False, "test_governance.py", []),
+    "generate_l4": ("L4 抽象投影生成（生成/发布分离）：网关摘要→published；缺席保留 draft 显式 pending", False, "test_api.py", []),
+    "recompute_collect_stale": ("血缘回溯第一步：汇总 stale 标记清单（崩溃可续）", False, "test_governance.py", []),
+    "recompute_recompute_one": ("逐条重算（work-queue 语义）：模式原子置信随源重算后清标记", False, "test_governance.py", []),
+    "recompute_clear_stale": ("血缘回溯收尾：残留 stale 标记归零（幂等）", False, "test_governance.py", []),
+    "intent_declare": ("意图声明双入口：declared 直生效 / agent_candidate 只产候选；发现位配额 G3", False, "test_governance.py", []),
+    "intent_confirm": ("意图确认卡片人裁：候选→active / 拒绝→completed（唯一确认链）", False, "test_governance.py", []),
+    "intent_update": ("意图三旋钮调整：有效期/可见性滑杆/期望回应（升入网络占位检查）", False, "test_governance.py", []),
+    "intent_sweep_expiry": ("意图到期扫描：active+ttl 过期→expired，退出发现索引", False, "test_governance.py", []),
 }
 
 MODULE_LOCATION = {
@@ -63,6 +81,11 @@ MODULE_LOCATION = {
 
 def location_for(step_name: str, fn) -> str:
     domain = step_name.split(".")[0]
+    if domain == "protocol":
+        sub = step_name.split(".")[1]
+        subdir = "governance" if (sub.startswith("manage_") or sub.startswith("recompute_")
+                                  or sub == "generate_l4") else "intents"
+        return f"metamemory/src/metamemory/protocol/{subdir}.py"
     base = MODULE_LOCATION.get(step_name.split(".")[1]) or MODULE_LOCATION.get(domain) or ""
     if base.endswith("/"):
         filenames = {
@@ -70,10 +93,12 @@ def location_for(step_name: str, fn) -> str:
             "engine/validate_graph": "graph.py", "engine/run_flow": "executor.py",
             "ingest/extract_deep": "extract.py", "ingest/extract_lite": "extract.py",
             "ingest/anchor_span": "extract.py", "ingest/verify_entailment": "extract.py",
-            "ingest/route_score": "extract.py",
+            "ingest/route_score": "extract.py", "ingest/embed_entries": "embedding.py",
+            "ingest/strength_refresh": "consolidate.py", "ingest/compress_fold": "consolidate.py",
+            "ingest/pattern_induce": "consolidate.py", "ingest/graph_cleanup": "consolidate.py",
             "query/rrf_fuse": "fusion.py", "query/budget_pack": "express.py",
             "query/merge_candidates": "recall.py", "query/query_recall": "recall.py",
-            "query/recall": "recall.py",
+            "query/recall": "recall.py", "query/rerank": "rerank.py",
         }
         base += filenames.get(f"{domain}/{step_name.split('.')[1]}", "steps.py")
     return base

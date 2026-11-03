@@ -200,6 +200,11 @@ class PersistentMemoryStore(MemoryStore):
         self.db.execute("UPDATE memory_entries SET stale=? WHERE entry_id=?",
                         (int(entry.stale), entry.entry_id))
 
+    def set_entry_strength(self, entry: MemoryEntry) -> None:
+        """强度写穿（consolidate.strength_refresh 衰减重算）。"""
+        self.db.execute("UPDATE memory_entries SET strength=? WHERE entry_id=?",
+                        (entry.strength, entry.entry_id))
+
     def gray_forget(self, entry_id: str) -> bool:
         """灰色遗忘：降权可恢复（strength=0 + 标记；检索路排除）。"""
         entry = self.entries.get(entry_id)

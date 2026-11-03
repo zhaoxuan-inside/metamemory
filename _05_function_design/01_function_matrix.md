@@ -331,3 +331,66 @@
 | 产出 | 评测统一走替身 Provider（非系统路径）；_07 重生成 |
 | 验收方式 | eval GATE PASS（路由 100%/recall@5 90.6%/拒答 100%/拦截 100%） |
 | 依赖 | T-031 | 预估 5min |
+
+### T-034 三分离地基：配置外置 + SQLite 真源（2026-11-04 交付，chg-005）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `src/metamemory/config.py`（storage/notify 段）、`config/metamemory.example.json`、`data/sqlite_{framework,core}_tables.sql`、`src/metamemory/domain/persist.py` |
+| 产出 | 配置发现链 env>config 文件>默认；PersistentMemoryStore 写穿+重启重建；数据落 var/（gitignored），代码目录零数据零配置 |
+| 验收方式 | test_persist（重启往返/supersedes 持久/灰硬遗忘/并发写穿 6 例） |
+| 依赖 | T-020 | 预估 5min |
+
+### T-035 M1 框架全量：任务日志/租约/调用缓存/通知/观测（2026-11-04 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `framework/queue/dispatch.py`（SqliteTaskJournal 租约 CAS）、`framework/queue/worker.py`、`framework/stores/sqlite_impl.py`（9 槽位 SQLite 件）、`framework/notify/notify.py`、`framework/observe/metrics.py`、`engine/executor.py`（检查点/租约/通知钩子） |
+| 产出 | 崩溃续跑（task_steps 重建游标）；并发零双持；llm_calls 持久缓存（重启同键命中）；三层通知（advance 落库/progress 总线/webhook HMAC+退避）；全指标 snapshot/prometheus |
+| 验收方式 | test_dispatch（崩溃续跑/租约/队列 CAS/通知三路/指标 14 例） |
+| 依赖 | T-034 | 预估 5min |
+
+### T-036 M3 信任完整：治理四子动词/血缘/意图/审计/计量（2026-11-04 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `protocol/governance.py`、`protocol/intents.py`、`protocol/audit.py`、`protocol/metering.py` |
+| 产出 | correct（supersedes+血缘 BFS+recompute 管道）/visibility（升档确认+L4 投影+降档撤回）/authz/forget（gray 可恢复+hard 级联）；意图状态机（双入口/确认卡/G3 配额/TTL 扫描）；审计链防篡改+verify；四维计量 |
+| 验收方式 | test_governance（治理/血缘/审计防篡改/意图状态机 17 例） |
+| 依赖 | T-035 | 预估 5min |
+
+### T-037 M2 理解闭环：网关 NLI/语义向量/rerank（2026-11-04 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `ingest/extract.py`（NLI 网关裁判）、`ingest/embedding.py`、`query/rerank.py`、`adapters/inference.py`（embed/任务标记）、`flows/core/ingest.json` v2 |
+| 产出 | NLI=LLM 裁判（缓存幂等/解析失败转复核）；语义向量写侧（ingest 流程 v2）+读侧（相关性地板 semantic_min_score）；精排组件（配置即启用） |
+| 验收方式 | test_m2（rerank/embed/网关 embeddings 7 例）；eval GATE PASS 数字与基线一致 |
+| 依赖 | T-034 | 预估 5min |
+
+### T-038 M4 开发者面：MCP/verify/grep/L4 生成/巩固管道（2026-11-04 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `api/mcp.py`（JSON-RPC 2.0 工具面+注入防御分隔符）、`protocol/governance.py`（generate_l4/降档撤回）、`ingest/consolidate.py`（强度衰减/折叠盘点/模式归纳 R1 门/图清理） |
+| 产出 | MCP-001 五工具（intent.* 永远产候选）；search verify 精确验证模式；L4 生成/发布分离（draft 显式 pending）；consolidate 流程步骤全量 |
+| 验收方式 | test_api（MCP 4 例）+ test_governance（血缘/模式归纳） |
+| 依赖 | T-036/T-037 | 预估 5min |
+
+### T-039 API 全量路由 + 认证（2026-11-04 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `api/app.py`（21 路由重写）、`security/keys.py`（ApiKeyStore，key 即查询者）、`api/mcp.py` |
+| 产出 | memories/history/context/manage/intents+confirm-card/tasks(运行+查询)/tasks/events(SSE)/audit(+verify)/metering/metrics(Prometheus)/mcp；Bearer key 认证（零配置引导期放行默认租户）；grep NDJSON 稳定行契约 |
+| 验收方式 | test_api（REST 8 例 + MCP 4 例 + 认证 1 例，fastapi TestClient 进程内） |
+| 依赖 | T-038 | 预估 5min |
+
+### T-040 控制台接线 + SOP 收口（2026-11-04 交付）
+
+| 字段 | 内容 |
+|---|---|
+| 涉及文件 | `metamemory_console/server.py`（build_context 复用/治理与流程面板/审计意图计量视图）、`_07`（47 方法重生成）、`_10`（chg-005）、`_00` 同步、README |
+| 产出 | 控制台配置持久化出代码目录（config 文件发现链同源）；面板补治理/审计/意图/计量；SOP 全量留痕 |
+| 验收方式 | test_console 6 例真实 HTTP 冒烟 + 全量 164 测试绿 + eval GATE PASS |
+| 依赖 | T-039 | 预估 5min |

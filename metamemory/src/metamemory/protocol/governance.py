@@ -161,7 +161,8 @@ def manage_visibility(input: dict, output: dict, context, tenant, metrics, evolu
     event_id = store.add_visibility_event(entry.entry_id, entry.domain_id, from_level, target,
                                           input.get("confirm_token"))
     published_ref = None
-    if target in ("L4", "L5"):  # 发布投影：生成/发布分离（L4 先 draft，S5 publish 生成摘要）
+    generation_pending = False
+    if target in ("L4", "L5"):  # 发布投影：生成/发布分离（L4 draft → 网关生成摘要 → published）
         window_hours = int((context.config.get("governance") or {}).get("publish_withdraw_window_hours", 72))
         item = PublishedItem(
             item_id=store.next_id("pub"), entry_id=entry.entry_id, level=target,
@@ -172,12 +173,20 @@ def manage_visibility(input: dict, output: dict, context, tenant, metrics, evolu
         )
         store.save_published(item)
         published_ref = item.item_id
+        if target == "L4":
+            generated = generate_l4({"item_id": published_ref}, {}, context, tenant, metrics, evolution)
+            generation_pending = not generated  # 网关缺席/失败 = 显式 pending（draft 态即诚实态）
+    elif _LEVEL_ORDER.get(from_level, 0) >= 3 and target not in ("L4", "L5"):
+        for item in store.published.values():  # 降档即撤回：发布投影退出公开面（72h 窗内无痕）
+            if item.entry_id == entry.entry_id and item.review_status in ("draft", "published"):
+                item.review_status = "withdrawn"
+                store.save_published(item)
     _audit(context, tenant, "manage.visibility", entry.entry_id,
            {"from": from_level, "to": target, "event_id": event_id, "published": published_ref})
     metrics.counter("manage.visibility")
     output.update({"memory_id": entry.entry_id, "from_level": from_level,
                    "target_level": target, "visibility_event": event_id,
-                   "published_item": published_ref})
+                   "published_item": published_ref, "generation_pending": generation_pending})
     return True
 
 
@@ -265,6 +274,52 @@ def _cascade_index_removal(context, memory_id: str) -> dict:
         except AttributeError:
             continue
     return removed
+
+
+# ---------------------------------------------------------------- L4 发布生成
+
+@unified_method("publish.generate_l4", 1, "orchestration")
+def generate_l4(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
+    """L4 抽象投影生成（生成/发布分离）：网关摘要 → published（进入公开裁决面）。
+
+    网关未配置/失败 = 显式 False（draft 态保留，绝不以原文出域——偏好出域只走 L4 抽象通道）。
+    """
+    store = context.deps["store"]
+    item = store.published.get(input.get("item_id", ""))
+    if item is None:
+        evolution.fail("NOT_FOUND", "发布投影不存在")
+        return False
+    entry = store.entries.get(item.entry_id)
+    if entry is None:
+        evolution.fail("NOT_FOUND", "源条目不存在")
+        return False
+    provider = context.deps.get("inference")
+    if provider is None or not getattr(provider, "model", ""):
+        metrics.counter("publish.generation_pending")
+        output.update({"item_id": item.item_id, "status": item.review_status,
+                       "generation_pending": True})
+        return False  # 显式失败：调用方（visibility 流程）保留 draft
+    prompt = (
+        "你是隐私抽象器。把下面的个人记忆改写成不含可识别细节的抽象陈述（用于有限公开），"
+        "保留意图与粒度，输出一行摘要文本，不要输出其他内容。\n"
+        f"记忆：{entry.object_value}"
+    )
+    response = provider.complete({"task": "publish", "prompt": prompt, "prefer": "gateway"})
+    summary = (response.get("text") or "").strip()
+    if not summary:
+        metrics.counter("publish.generation_pending")
+        return False
+    ledger = context.deps.get("metering")
+    if ledger is not None and response.get("tokens"):
+        ledger.record(tenant.tenant_id, "llm.tokens", response["tokens"], source="publish.generate_l4")
+    item.summary = summary
+    item.review_status = "published"
+    item.published_at = time.time()
+    store.save_published(item)
+    _audit(context, tenant, "publish.generate_l4", item.item_id, {"level": item.level})
+    metrics.counter("publish.generated")
+    output.update({"item_id": item.item_id, "status": "published", "summary": summary})
+    return True
 
 
 # ---------------------------------------------------------------- recompute 管道步骤

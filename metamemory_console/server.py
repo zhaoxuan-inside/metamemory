@@ -85,7 +85,17 @@ class ConsoleApp:
             "steps": [{"step": s, "version": v, "category": c} for s, v, c, _ in comp["registry"].entries()],
             "flows": {name: {"entry": p.entry, "nodes": len(p.nodes)} for name, p in comp["flows"].items()},
             "store": {"episodes": len(store.episodes), "entries": len(store.entries),
-                      "edges": len(store.edges), "authz": len(store.authz)},
+                      "edges": len(store.edges), "authz": len(store.authz),
+                      "intents": len(store.intents),
+                      "published": len(getattr(store, "published", {}))},
+            "governance": {
+                "audit_chain_ok": (self.composition["audit"].verify()["ok"]
+                                   if self.composition.get("audit") else None),
+                "metering": (self.composition["metering"].summary()
+                             if self.composition.get("metering") else []),
+                "intents_by_state": self._intents_by_state(store),
+                "review_queue_journal": (self.composition["journal"].review_queue(limit=20)
+                                         if self.composition.get("journal") else []),},
             "tasks": [{"task_id": tid, "status": t["status"],
                        "nodes": {n: s for n, s in t["cursor"].items()}}
                       for tid, t in list(engine.tasks.items())[-50:]],
@@ -94,6 +104,13 @@ class ConsoleApp:
                         "avg_duration_ms": dict(sorted(durations.items()))},
             "eval": report,
         }
+
+    @staticmethod
+    def _intents_by_state(store) -> dict:
+        counts: dict[str, int] = {}
+        for intent in getattr(store, "intents", {}).values():
+            counts[intent.state] = counts.get(intent.state, 0) + 1
+        return counts
 
     @staticmethod
     def _eval_report() -> dict | None:
@@ -114,17 +131,11 @@ class ConsoleApp:
         }
 
     def _session(self):
+        from api.app import build_context
+
         tenant = make_tenant("t_console", "d_console", "console")
         set_tenant(tenant)
-        from metamemory_framework.container.types import Context
-
-        context = Context(
-            deps={"store": self.composition["store"], "authz": self.composition["authz"],
-                  "engine": self.composition["engine"], "inference": self.composition["inference"],
-                  "call_cache": self.composition["call_cache"], "flows": self.composition["flows"]},
-            config=self.composition["config"],
-        )
-        return context, tenant, MetricsImpl(), Evolution()
+        return (build_context(self.composition, tenant), tenant, MetricsImpl(), Evolution())
 
     def add_memory(self, body: dict) -> dict:
         """可视化追踪的数据入口：受理 → 同步驱动 ingest 流程 → 返回任务与产物。"""
@@ -149,6 +160,26 @@ class ConsoleApp:
              "top_k": int(params.get("top_k", 10)), "intent": params.get("intent", "fact")},
             out, context, tenant, metrics, evolution)
         return {"ok": ok, **out}
+
+    def manage(self, action: str, payload: dict) -> dict:
+        """治理动作面板入口：与 REST 同一协议分派（correct/visibility/authz/forget）。"""
+        from api.app import call_protocol
+
+        out, meta = call_protocol(self.composition, f"manage_{action}", payload,
+                                  {"authorization": ""})
+        return {**meta, **out}
+
+    def run_pipeline(self, name: str) -> dict:
+        """巩固/重算流程触发（consolidate/recompute）。"""
+        pipeline = self.composition["flows"].get(name)
+        if pipeline is None:
+            return {"ok": False, "error": "UNKNOWN_PIPELINE"}
+        context, tenant, metrics, evolution = self._session()
+        engine = self.composition["engine"]
+        task_id = engine.submit(pipeline, params={}, tenant_id=tenant.tenant_id)
+        result: dict = {}
+        engine.run_flow({"task_id": task_id}, result, context, tenant, metrics, evolution)
+        return {"ok": True, "task_id": task_id, "status": result.get("task_status")}
 
     def task_detail(self, task_id: str) -> dict:
         task = self.composition["engine"].tasks.get(task_id)
@@ -187,6 +218,11 @@ def make_handler(app: ConsoleApp):
                 return self._send(200, {"applied": True, "config": app.apply_config(body)})
             if self.path == "/api/memories":
                 return self._send(200, app.add_memory(body))
+            if self.path == "/api/manage":
+                return self._send(200, app.manage(body.get("action", ""),
+                                                  body.get("payload", {})))
+            if self.path == "/api/pipelines":
+                return self._send(200, app.run_pipeline(body.get("pipeline", "")))
             return self._send(404, {"error": "NOT_FOUND"})
 
         def log_message(self, *args):  # 静默访问日志

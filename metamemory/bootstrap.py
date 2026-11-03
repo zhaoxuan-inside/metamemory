@@ -17,7 +17,14 @@ from metamemory_framework.engine.graph import pipeline_from_dict, validate_graph
 from metamemory_framework.registry.registry import REGISTRY
 
 # 注册核心层步骤（import 即注册：unified_method 装饰器副作用）
-from metamemory.ingest import embedding, extract, fastpath, organize, steps  # noqa: F401,E402
+from metamemory.ingest import (  # noqa: F401,E402
+    consolidate,
+    embedding,
+    extract,
+    fastpath,
+    organize,
+    steps,
+)
 from metamemory.protocol import arbiter, facade, governance, intents  # noqa: F401,E402
 from metamemory.protocol.audit import AuditLog  # noqa: E402
 from metamemory.protocol.metering import MeteringLedger  # noqa: E402
@@ -81,10 +88,27 @@ def build_composition(profile: str | None = None, config: MetaMemoryConfig | Non
     engine = GraphExecutor(REGISTRY, journal=SqliteTaskJournal(db),
                            notify=NotifyFanout(progress_bus, OutboxNotifier(db), webhook),
                            flow_provider=_flow_provider(cfg))
+    from metamemory_framework.queue.worker import TaskWorker
+    from metamemory_framework.security.keys import ApiKeyStore
+
+    def _worker_context(record: dict):
+        from api.app import build_context as _build_api_context
+        from metamemory_framework.security.context import make_tenant as _mk
+
+        tenant = _mk(record.get("tenant_id") or "t_system",
+                     record.get("tenant_id") or "d_system", "worker")
+        context = _build_api_context(_composition_ref[0], tenant)
+        context.config = record.get("config_snapshot") or context.config
+        return context, tenant
+
+    _composition_ref: list = [None]
+    worker = TaskWorker(engine, engine.journal, context_factory=_worker_context)
     composition = {
         "audit": AuditLog(db),
         "metering": MeteringLedger(db),
         "confirm_signer": ConfirmationSigner(db),
+        "keys": ApiKeyStore(db),
+        "worker": worker,
         "profile": cfg.profile,
         "db": db,
         "store": store,
@@ -106,6 +130,7 @@ def build_composition(profile: str | None = None, config: MetaMemoryConfig | Non
         "config": cfg.to_dict(),
         "db_path": db_path,
     }
+    _composition_ref[0] = composition
     return composition
 
 
@@ -158,6 +183,7 @@ class _QuietEvo:
 
 def main() -> None:  # pragma: no cover
     composition = build_composition()
+    composition["worker"].start()  # 受理 202 语义的执行侧（lite 单 worker）
     results = validate_flows(composition)
     for name, result in results.items():
         print(f"flow {name}: {'ok' if result.get('ok') else result.get('errors')}")

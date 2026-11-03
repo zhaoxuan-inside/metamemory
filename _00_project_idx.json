@@ -153,7 +153,7 @@
       "files": [
         {
           "file": "01_function_matrix.md",
-          "summary": "模块×层功能矩阵 + S0 骨架任务卡 T-001~T-024 + 里程碑 M1-M4 / 切片 S0-S3",
+          "summary": "模块×层功能矩阵 + 任务卡 T-001~T-040 + 里程碑 M0-M4 全部交付（M1-M4 于 chg-005 完成）",
           "status": "confirmed"
         }
       ]
@@ -236,7 +236,7 @@
       {
         "name": "framework-stores",
         "path": "metamemory/src/metamemory_framework/stores",
-        "summary": "Store 接口族 9 槽位 Protocol + 内存降级实现",
+        "summary": "Store 接口族 9 槽位 Protocol + SQLite 真实现（FTS/图/向量/锁/队列/对象）+ 内存降级件",
         "owner": ""
       },
       {
@@ -248,7 +248,7 @@
       {
         "name": "core-protocol",
         "path": "metamemory/src/metamemory/protocol",
-        "summary": "Memory API 门面（add/search）+ VisionArbiter + 授权三元组 + 计量横切",
+        "summary": "Memory API 门面（add/search）+ VisionArbiter + 授权三元组 + 计量横切 + 治理四子动词/意图状态机/审计链",
         "owner": ""
       },
       {
@@ -286,17 +286,41 @@
         "path": "metamemory_console/",
         "summary": "同级 Web 管理控制台：可视化配置（网关热更新）+ 可视化追踪（任务/节点级状态机、复核队列、指标）——stdlib 唯一依赖",
         "owner": ""
+      },
+      {
+        "name": "framework-queue",
+        "path": "metamemory/src/metamemory_framework/queue",
+        "summary": "任务日志（检查点/租约 CAS/崩溃续跑）+ worker 循环（受理 202 的执行侧）",
+        "owner": ""
+      },
+      {
+        "name": "framework-notify",
+        "path": "metamemory/src/metamemory_framework/notify",
+        "summary": "三层通知：advance 落库扫描兜底 / progress 进程内总线 / webhook HMAC 签名+退避重试",
+        "owner": ""
+      },
+      {
+        "name": "core-governance",
+        "path": "metamemory/src/metamemory/protocol",
+        "summary": "governance（manage 四子动词/血缘回溯/L4 发布生成）/intents（状态机）/audit（防篡改链）/metering（四维账本）",
+        "owner": ""
+      },
+      {
+        "name": "app-mcp",
+        "path": "metamemory/api/mcp.py",
+        "summary": "MCP 工具面（JSON-RPC 2.0）：memory.*/intent.* 与 REST 同构，intent.* 永远产候选",
+        "owner": ""
       }
     ]
   },
   "method_index": {
     "path": "_07_method_idx.json",
     "stats": {
-      "total": 28,
+      "total": 47,
       "by_category": {
-        "algorithm": 4,
-        "orchestration": 9,
-        "data": 15
+        "algorithm": 5,
+        "orchestration": 17,
+        "data": 25
       }
     }
   },
@@ -306,7 +330,7 @@
   },
   "change_log": {
     "path": "_10_change_log.json",
-    "latest": "chg-004"
+    "latest": "chg-005"
   },
   "quality_gates": {
     "lint": "ruff check metamemory/src metamemory/tests",

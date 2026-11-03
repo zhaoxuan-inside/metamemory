@@ -166,3 +166,13 @@ CREATE TABLE IF NOT EXISTS queue_items (
   created_at      TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_queue_poll ON queue_items (queue, status, next_retry_at);
+
+-- API Key 注册表（key 即查询者；存储只落 sha256）
+CREATE TABLE IF NOT EXISTS api_keys (
+  key_hash   TEXT PRIMARY KEY,
+  tenant_id  TEXT NOT NULL,
+  domain_id  TEXT NOT NULL,
+  actor      TEXT NOT NULL,
+  note       TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL
+);
