@@ -17,7 +17,7 @@ from metamemory_framework.engine.graph import pipeline_from_dict, validate_graph
 from metamemory_framework.registry.registry import REGISTRY
 
 # 注册核心层步骤（import 即注册：unified_method 装饰器副作用）
-from metamemory.ingest import extract, fastpath, organize, steps  # noqa: F401,E402
+from metamemory.ingest import embedding, extract, fastpath, organize, steps  # noqa: F401,E402
 from metamemory.protocol import arbiter, facade, governance, intents  # noqa: F401,E402
 from metamemory.protocol.audit import AuditLog  # noqa: E402
 from metamemory.protocol.metering import MeteringLedger  # noqa: E402

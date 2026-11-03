@@ -17,11 +17,16 @@ class _FakeGateway:
     """测试替身：模拟已配置的强模型网关（ADR-006 唯一路径的注入点）。"""
 
     def complete(self, request: dict) -> dict:
+        if request.get("task") == "nli":  # NLI 裁判替身：含否定/取消词判矛盾
+            negate = any(w in request.get("prompt", "") for w in ("不是", "不再", "没有", "取消"))
+            verdict = "contradict" if negate else "entail"
+            return {"text": '{"verdict": "%s", "confidence": 0.9}' % verdict,
+                    "tokens": 5, "provider": "fake"}
         body = request.get("prompt", "").split("段落：\n", 1)[-1]
         atoms = [{"text": line, "subject": "user", "predicate": "mentioned",
                   "quote": line, "entry_type": "fact"}
                  for line in body.split("\n") if line.strip()]
-        return {"atoms": atoms, "provider": "fake"}
+        return {"atoms": atoms, "tokens": 20, "provider": "fake"}
 
 
 class TestConsole(unittest.TestCase):

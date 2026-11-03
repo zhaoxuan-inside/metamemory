@@ -32,7 +32,12 @@ class FakeProvider:
         self.atoms = atoms
 
     def complete(self, request: dict) -> dict:
-        return {"atoms": self.atoms, "provider": "fake"}
+        if request.get("task") == "nli":  # 裁判替身：含否定/取消词判矛盾（对齐原启发式语义）
+            negate = any(w in request.get("prompt", "") for w in ("不是", "不再", "没有", "取消"))
+            verdict = "contradict" if negate else "entail"
+            return {"text": '{"verdict": "%s", "confidence": 0.9}' % verdict,
+                    "tokens": 5, "provider": "fake"}
+        return {"atoms": self.atoms, "tokens": 20, "provider": "fake"}
 
 
 class TestFastPath(unittest.TestCase):
@@ -140,11 +145,34 @@ class TestExtractAndRoute(unittest.TestCase):
         self.assertFalse(out["anchored"])
 
     def test_verify_entailment_contradiction(self):
-        ctx, tenant, m, evo = stubs()
+        """NLI 走网关裁判（ADR-006 唯一路径）：矛盾语义 → contradict。"""
+        ctx, tenant, m, evo = stubs(deps={"inference": FakeProvider([])})
         out = {}
         verify_entailment({"atom_text": "我不再去北京了", "span_text": "我下周要去北京出差"},
                           out, ctx, tenant, m, evo)
         self.assertEqual(out["verdict"], "contradict")
+
+    def test_verify_entailment_parse_failure_is_contract_violation(self):
+        """裁判输出非约定 JSON = 契约违规（转复核），禁启发式兜底（ADR-006）。"""
+        from metamemory_framework.container.policy import ContractViolation
+
+        class _BadProvider:
+            def complete(self, request):
+                return {"text": "我觉得大概是支持的吧", "tokens": 5, "provider": "bad"}
+
+        ctx, tenant, m, evo = stubs(deps={"inference": _BadProvider()})
+        out = {}
+        with self.assertRaises(ContractViolation):
+            verify_entailment({"atom_text": "断言", "span_text": "原文"}, out, ctx, tenant, m, evo)
+
+    def test_verify_entailment_provider_missing_is_dependency_error(self):
+        """未配置推理网关 = 显式失败（重试/死信），不静默降质。"""
+        from metamemory_framework.container.policy import DependencyError
+
+        ctx, tenant, m, evo = stubs()
+        with self.assertRaises(DependencyError):
+            verify_entailment({"atom_text": "断言", "span_text": "原文"}, out := {},
+                              ctx, tenant, m, evo)
 
     def test_route_score_four_states(self):
         ctx, tenant, m, evo = stubs()

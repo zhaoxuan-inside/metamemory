@@ -1,6 +1,6 @@
 {
   "name": "ingest",
-  "version": 1,
+  "version": 2,
   "entry": "normalize",
   "deadline_seconds": 300,
   "nodes": [
@@ -127,7 +127,7 @@
       "step_name": "ingest.organize_links",
       "edges": [
         {
-          "to": "done"
+          "to": "embed"
         }
       ]
     },
@@ -145,6 +145,16 @@
       "node_id": "done",
       "node_type": "step",
       "node_class": "terminal"
+    },
+    {
+      "node_id": "embed",
+      "node_type": "step",
+      "step_name": "ingest.embed_entries",
+      "edges": [
+        {
+          "to": "done"
+        }
+      ]
     }
   ]
 }

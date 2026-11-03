@@ -2,13 +2,17 @@
 
 硬约束：无引文不记忆（锚定失败→abstain 转复核，不静默）；四态=提取/折叠/留原文/
 abstain（约束 15：判不了是合法结论，禁默认落置）；注入疑段落置信强制封顶。
+M2 理解闭环：NLI 忠实校验走网关 LLM 裁判（ADR-006 唯一路径，llm_calls 缓存幂等）；
+裁判输出解析失败 = ContractViolation → 复核（禁启发式兜底，禁静默降质）。
 """
 from __future__ import annotations
 
 import json
 
-from metamemory_framework.container.policy import ContractViolation
+from metamemory_framework.container.policy import ContractViolation, DependencyError
 from metamemory_framework.container.signature import unified_method
+
+NLI_NODE = "ingest.verify_entailment"
 
 
 @unified_method("ingest.extract_deep", 1, "orchestration")
@@ -16,7 +20,7 @@ def extract_deep(input: dict, output: dict, context, tenant, metrics, evolution)
     """I-018：深提取编排——强模型命题化；调用缓存命中直接回填（A7 幂等重放不重复付费）。"""
     provider = context.deps.get("inference")
     if provider is None:
-        evolution.fail("PROVIDER_MISSING", "推理双通道未装配")
+        evolution.fail("PROVIDER_MISSING", "推理网关未装配")
         return False
     prompt = _build_prompt(input.get("selected") or input.get("segments") or [])
     response = _complete_cached(context, metrics, provider, prompt)
@@ -28,7 +32,7 @@ def extract_deep(input: dict, output: dict, context, tenant, metrics, evolution)
         raise ContractViolation("extract_response_missing_atoms")
     episode_content = input.get("normalized", {}).get("content", "")
     worthiness_map = {s["text"]: s.get("worthiness", "mid") for s in input.get("selected") or []}
-    candidates = [_enrich(atom, episode_content, worthiness_map, tenant) for atom in atoms]
+    candidates = [_enrich(atom, episode_content, worthiness_map, context, tenant, metrics) for atom in atoms]
     output["atom_candidates"] = candidates
     output["candidates"] = candidates
     metrics.counter("extract.candidates", len(candidates))
@@ -39,29 +43,31 @@ def _complete_cached(context, metrics, provider, prompt: str) -> dict:
     """推理调用经 CallCache：键 = (step, input_hash, prompt_version)；未装配缓存时直连。"""
     cache = context.deps.get("call_cache")
     if cache is None:
-        return provider.complete({"prompt": prompt, "prefer": "gateway"})
+        return provider.complete({"task": "extract", "prompt": prompt, "prefer": "gateway"})
     input_hash = cache.input_hash(prompt)
-    cached = cache.lookup("ingest.extract_deep", input_hash, "v1")
+    prompt_version = (context.config.get("inference") or {}).get("prompt_version", "v1")
+    cached = cache.lookup("ingest.extract_deep", input_hash, prompt_version)
     if cached is not None:
         metrics.counter("llm_cache_hit")
         return {k: v for k, v in cached.items() if k != "cached_at"}
-    response = provider.complete({"prompt": prompt, "prefer": "gateway"})
+    response = provider.complete({"task": "extract", "prompt": prompt, "prefer": "gateway"})
     if "atoms" in response:
-        cache.store("ingest.extract_deep", input_hash, "v1", response)
+        cache.store("ingest.extract_deep", input_hash, prompt_version, response)
     return response
 
 
-def _enrich(atom: dict, episode_content: str, worthiness_map: dict, tenant) -> dict:
-    """逐原子补引文锚点与 NLI 判定（锚定/校验算法下沉，提取只做编排）。"""
+def _enrich(atom: dict, episode_content: str, worthiness_map: dict, context, tenant, metrics) -> dict:
+    """逐原子补引文锚点与 NLI 判定（锚定/校验下沉为步骤，提取只做编排）。"""
     anchor: dict = {}
     anchor_span({"quote": atom.get("quote") or atom["text"], "episode_content": episode_content},
-                anchor, None, tenant, _Quiet(), _QuietEvo())
+                anchor, None, tenant, metrics, _QuietEvo())
     span_text = ""
     if anchor.get("anchored"):
         span_text = episode_content[anchor["span"][0]:anchor["span"][1]]
-    verdict: dict = {}
-    verify_entailment({"atom_text": atom["text"], "span_text": span_text},
-                      verdict, None, tenant, _Quiet(), _QuietEvo())
+    verdict: dict = {"verdict": "neutral", "confidence": 0.0}
+    if anchor.get("anchored"):  # 无锚点不校验（路由层先按 NO_ANCHOR 弃权）
+        verify_entailment({"atom_text": atom["text"], "span_text": span_text},
+                          verdict, context, tenant, metrics, _QuietEvo())
     worthiness = worthiness_map.get(atom.get("quote") or atom["text"], "mid")
     return {**atom, **anchor, **verdict, "worthiness": worthiness}
 
@@ -83,18 +89,66 @@ def anchor_span(input: dict, output: dict, context, tenant, metrics, evolution) 
 
 @unified_method("ingest.verify_entailment", 1, "data")
 def verify_entailment(input: dict, output: dict, context, tenant, metrics, evolution) -> bool:
-    """I-020：NLI 忠实校验骨架（三态）：entail / contradict / neutral（边界带）。"""
-    atom_text = input["atom_text"].lower()
-    span_text = input["span_text"].lower()
-    if any(neg in atom_text for neg in ("不是", "不再", "没有", "取消")):
-        output.update({"verdict": "contradict", "confidence": 0.4})
-        return True
-    overlap = len(set(atom_text.split()) & set(span_text.split())) if " " in atom_text else int(input["atom_text"] in span_text)
-    if overlap > 0:
-        output.update({"verdict": "entail", "confidence": 0.9})
-    else:
-        output.update({"verdict": "neutral", "confidence": 0.3})
+    """I-020：NLI 忠实校验（三态）——网关 LLM 裁判；解析失败转复核，无启发式兜底。"""
+    provider = context.deps.get("inference") if context is not None else None
+    if provider is None:
+        raise DependencyError("provider_missing: NLI 裁判需要推理网关（ADR-006 唯一路径）")
+    prompt = _build_nli_prompt(input["atom_text"], input["span_text"])
+    prompt_version = "v1"
+    cache = context.deps.get("call_cache")
+    input_hash = None
+    if cache is not None:
+        prompt_version = (context.config.get("inference") or {}).get("nli_prompt_version", "v1")
+        input_hash = cache.input_hash(prompt)
+        cached = cache.lookup(NLI_NODE, input_hash, prompt_version)
+        if cached is not None:
+            metrics.counter("llm_cache_hit")
+            output.update({k: v for k, v in cached.items() if k != "cached_at"})
+            return True
+    response = provider.complete({"task": "nli", "prompt": prompt, "prefer": "gateway"})
+    ledger = context.deps.get("metering")
+    if ledger is not None and response.get("tokens"):
+        ledger.record(tenant.tenant_id if tenant is not None else "", "llm.tokens",
+                      response["tokens"], source=NLI_NODE)
+    verdict = _parse_verdict(response.get("text"))
+    if verdict is None:
+        raise ContractViolation("nli_parse_failed: 裁判输出非约定 JSON（转复核，禁启发式兜底）")
+    if cache is not None and input_hash is not None:
+        cache.store(NLI_NODE, input_hash, prompt_version, verdict)
+    output.update(verdict)
     return True
+
+
+def _parse_verdict(text: str | None) -> dict | None:
+    """裁判文本 → 三态判定：约定 JSON {verdict: entail|contradict|neutral, confidence}。"""
+    if not text:
+        return None
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        start, end = text.find("{"), text.rfind("}")
+        if start < 0 or end <= start:
+            return None
+        try:
+            parsed = json.loads(text[start:end + 1])
+        except json.JSONDecodeError:
+            return None
+    if not isinstance(parsed, dict) or parsed.get("verdict") not in ("entail", "contradict", "neutral"):
+        return None
+    confidence = parsed.get("confidence", 0.5)
+    if not isinstance(confidence, (int, float)) or not 0.0 <= confidence <= 1.0:
+        confidence = 0.5
+    return {"verdict": parsed["verdict"], "confidence": float(confidence)}
+
+
+def _build_nli_prompt(atom_text: str, span_text: str) -> str:
+    """NLI 裁判 prompt（v1）：三态判定 + 置信，只输出 JSON（版本入幂等键）。"""
+    return (
+        "你是自然语言推理裁判。判断【断言】是否被【原文】支持：\n"
+        '只输出 JSON：{"verdict": "entail|contradict|neutral", "confidence": 0到1的小数}\n'
+        "entail=原文支持断言；contradict=原文与断言矛盾；neutral=原文信息不足。\n"
+        f"【断言】{atom_text}\n【原文】{span_text}"
+    )
 
 
 @unified_method("ingest.route_score", 1, "data")
@@ -128,17 +182,6 @@ def route_score(input: dict, output: dict, context, tenant, metrics, evolution) 
     return True
 
 
-def _parse_atoms_text(text: str | None) -> list | None:
-    """网关文本 → 原子列表：约定 JSON 数组（命题/主谓宾/引文），解析失败交复核。"""
-    if not text:
-        return None
-    try:
-        parsed = json.loads(text)
-    except json.JSONDecodeError:
-        return None
-    return parsed if isinstance(parsed, list) else None
-
-
 def _build_prompt(segments: list) -> str:
     """深提取 prompt（v1）：命题化 + 强制引文 + JSON 数组输出（prompt 版本入幂等键）。"""
     lines = [segment.get("text", "") for segment in segments]
@@ -148,22 +191,6 @@ def _build_prompt(segments: list) -> str:
         "quote（必须逐字来自原文，用于引文锚定）、entry_type（preference/fact/promise/event）。\n"
         "段落：\n" + "\n".join(lines)
     )
-
-
-class _Quiet:
-    """组合调用（提取编排锚定/校验）时的静默观测桩。"""
-
-    def enter(self, *a, **k) -> None: ...
-
-    def exit(self, *a, **k) -> None: ...
-
-    def log(self, *a, **k) -> None: ...
-
-    def counter(self, *a, **k) -> None: ...
-
-    def gauge(self, *a, **k) -> None: ...
-
-    def mark(self, *a, **k) -> None: ...
 
 
 class _QuietEvo:

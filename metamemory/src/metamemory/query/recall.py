@@ -63,10 +63,13 @@ def query_recall(input: dict, output: dict, context, tenant, metrics, evolution)
     """I-032：五路并行召回（lite 骨架）→ 候选合并；过滤前不做业务加工。"""
     store: MemoryStore = context.deps["store"]
     tokens = _tokenize(input["query"].lower())
+    inference = context.deps.get("inference") if context is not None else None
+    vectors = context.deps.get("vector_store") if context is not None else None
     paths: dict[str, list[dict]] = {
         "fulltext": _fulltext_path(store, tokens, fts=context.deps.get("fts") if context is not None else None,
                                    query=input["query"]),
-        "semantic": _semantic_path(store, tokens),
+        "semantic": _semantic_path(store, tokens, query=input["query"],
+                                   embedder=inference, vectors=vectors, context=context),
         "graph": _graph_path(store, tokens),
         "timeline": _timeline_path(store, tokens, input.get("since")),
         "context": _context_path(store, input.get("episode_ref")),
@@ -119,9 +122,27 @@ def _fulltext_path(store: MemoryStore, tokens: set[str], fts=None, query: str = 
     return sorted(hits, key=lambda h: h["score"], reverse=True)
 
 
-def _semantic_path(store: MemoryStore, tokens: set[str]) -> list[dict]:
-    """lite 语义路降级为词面重叠（VectorStore 接口位：pgvector/sqlite-vec）。"""
-    return _fulltext_path(store, tokens)
+def _semantic_path(store: MemoryStore, tokens: set[str], query: str = "",
+                   embedder=None, vectors=None, context=None) -> list[dict]:
+    """语义路：网关 embeddings + 向量槽位（写侧 embed_entries 已建索引）。
+
+    未配置 embedding_model = 该路返回空（显式计数于写侧/读侧，不静默降质——
+    ADR-006：语义缺席是配置选择，不是更低质量的同类替代）。
+    """
+    if embedder is None or vectors is None or not getattr(embedder, "embedding_model", ""):
+        return []
+    qvec = embedder.embed([query])[0]  # 未配置/故障 = DependencyError 显式失败
+    min_score = 0.5
+    if context is not None:
+        min_score = float((context.config.get("recall") or {}).get("semantic_min_score", 0.5))
+    hits = []
+    for hit in vectors.search("entries", qvec, k=20):
+        if hit["score"] < min_score:  # 相关性地板：低于地板=无关（拒答语义，不凑数）
+            continue
+        entry = store.entries.get(hit["id"])
+        if entry is not None and not entry.gray_forgotten:
+            hits.append(_candidate(entry, hit["score"]))
+    return hits
 
 
 def _graph_path(store: MemoryStore, tokens: set[str]) -> list[dict]:

@@ -36,14 +36,39 @@ ROUTES = ("extract", "fold", "keep_raw", "abstain")
 
 
 class RuleExtractionProvider:
-    """评测替身（仅评测用，非系统路径——ADR-006）：解析 prompt 正文段落，逐句产出原子。"""
+    """评测替身（仅评测用，非系统路径——ADR-006）：解析 prompt 正文段落，逐句产出原子；
+    NLI 按否定/取消词三态判定；embed 为确定性词袋哈希向量（五路评测齐备）。"""
+
+    embedding_model = "eval-hash-bag-16"
 
     def complete(self, request: dict) -> dict:
+        if request.get("task") == "nli":
+            prompt = request.get("prompt", "")
+            negate = any(w in prompt for w in ("不是", "不再", "没有", "取消", "忽略之前", "忽略以上"))
+            verdict = "contradict" if negate else "entail"
+            return {"text": '{"verdict": "%s", "confidence": 0.95}' % verdict,
+                    "tokens": 5, "provider": "eval_fixture"}
         body = request.get("prompt", "").split("段落：\n", 1)[-1]
         atoms = [{"text": line, "subject": "user", "predicate": "mentioned",
                   "quote": line, "entry_type": "fact"}
                  for line in body.split("\n") if line.strip()]
-        return {"atoms": atoms, "provider": "eval_fixture"}
+        return {"atoms": atoms, "tokens": 20, "provider": "eval_fixture"}
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        """确定性词袋向量（4096 维，md5 散列）：无碰撞 → 余弦≈词面重叠，不制造虚假相关。"""
+        import hashlib
+        import math
+
+        vectors = []
+        for text in texts:
+            vec = [0.0] * 4096
+            for token in text.lower().split():
+                digest = hashlib.md5(token.encode()).digest()
+                dim = int.from_bytes(digest[:4], "big") % 4096
+                vec[dim] += 1.0
+            norm = math.sqrt(sum(x * x for x in vec)) or 1.0
+            vectors.append([x / norm for x in vec])
+        return vectors
 
 
 def load_jsonl(path: Path) -> list[dict]:
@@ -56,7 +81,10 @@ def new_context(composition: dict, inference=None):
     context = Context(
         deps={"store": composition["store"], "authz": composition["authz"],
               "engine": composition["engine"], "inference": inference or composition["inference"],
-              "call_cache": composition["call_cache"], "flows": composition["flows"]},
+              "call_cache": composition["call_cache"], "flows": composition["flows"],
+              "fts": composition.get("fts"), "vector_store": composition.get("vector_store"),
+              "audit": composition.get("audit"), "metering": composition.get("metering"),
+              "confirm_signer": composition.get("confirm_signer")},
         config=composition["config"],
     )
     return context, tenant, MetricsImpl(), Evolution()
@@ -106,6 +134,8 @@ def run_route_suite(composition: dict, records: list[dict]) -> dict:
         route_score({"candidates": ext["candidates"]}, score, context, tenant, metrics, evolution)
         actual = score["routes"][0]["route"] if score.get("routes") else "keep_raw"
         expected = record["expected_route"]
+        record["_faithful"] = bool(score.get("routes")) and all(
+            r.get("anchored") and r.get("verdict") == "entail" for r in score.get("routes", []))
         per_route[expected]["total"] += 1
         confusion[expected][actual] += 1
         if actual == expected:
@@ -116,8 +146,10 @@ def run_route_suite(composition: dict, records: list[dict]) -> dict:
             abstain_reason_ok += 1
     total = sum(v["total"] for v in per_route.values())
     hit = sum(v["hit"] for v in per_route.values())
+    faithful = sum(1 for record in records if record.get("_faithful"))
     return {
         "suite": "golden_route", "total": total, "hit": hit,
+        "faithfulness_proxy": round(faithful / total, 4) if total else 0.0,
         "route_accuracy": round(hit / total, 4) if total else 0.0,
         "per_route": {r: {"hit": v["hit"], "total": v["total"],
                           "acc": round(v["hit"] / v["total"], 3) if v["total"] else None}
@@ -194,16 +226,31 @@ def run_injection_suite(composition: dict, records: list[dict]) -> dict:
             "missed_ids": missed}
 
 
-def run_all(datasets_dir: Path | None = None, data_dir: str | None = None) -> dict:
+def run_all(datasets_dir: Path | None = None, data_dir: str | None = None,
+            provider_mode: str = "eval") -> dict:
     datasets = datasets_dir or EVAL_ROOT / "datasets"
     # 三分离：评测是测试工件，数据面落独立临时目录（不污染运行档 var/，可重复播种）
     import tempfile
 
     from metamemory.config import MetaMemoryConfig, StorageConfig
 
-    cfg = MetaMemoryConfig(storage=StorageConfig(data_dir=data_dir or tempfile.mkdtemp(prefix="metamemory-eval-")))
-    composition = bootstrap.build_composition(config=cfg)
-    composition["inference"] = RuleExtractionProvider()  # 评测运行统一使用替身（非系统路径）
+    import os
+
+    if provider_mode == "gateway":
+        # 网关模式：真实推理网关（s1 门禁口径——忠实率/召回数字即系统真实能力）
+        cfg = MetaMemoryConfig(storage=StorageConfig(data_dir=data_dir or tempfile.mkdtemp(prefix="metamemory-eval-")))
+        cfg.inference.base_url = os.environ.get("METAMEMORY_INFERENCE_BASE_URL", cfg.inference.base_url)
+        cfg.inference.api_key = os.environ.get("METAMEMORY_INFERENCE_API_KEY", cfg.inference.api_key)
+        cfg.inference.model = os.environ.get("METAMEMORY_INFERENCE_MODEL", cfg.inference.model)
+        cfg.inference.embedding_model = os.environ.get(
+            "METAMEMORY_INFERENCE_EMBEDDING_MODEL", cfg.inference.embedding_model)
+        composition = bootstrap.build_composition(config=cfg)
+        if not (cfg.inference.base_url and cfg.inference.model):
+            raise SystemExit("gateway 模式需配置推理网关（METAMEMORY_INFERENCE_BASE_URL/MODEL）")
+    else:
+        cfg = MetaMemoryConfig(storage=StorageConfig(data_dir=data_dir or tempfile.mkdtemp(prefix="metamemory-eval-")))
+        composition = bootstrap.build_composition(config=cfg)
+        composition["inference"] = RuleExtractionProvider()  # 评测运行统一使用替身（非系统路径）
     report = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "profile": composition["profile"],

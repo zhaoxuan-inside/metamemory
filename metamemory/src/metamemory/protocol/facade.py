@@ -19,6 +19,7 @@ from ..ingest.steps import (  # noqa: F401
 )
 from ..query.express import budget_pack
 from ..query.fusion import rrf_fuse
+from ..query.rerank import rerank  # noqa: F401  （注册精排步骤）
 from ..query.recall import query_recall
 from .arbiter import arbiter_decide
 from .authorization import AuthzRegistry
@@ -69,6 +70,8 @@ def protocol_search(input: dict, output: dict, context, tenant, metrics, evoluti
     fused: dict = {}
     ranked_lists = recall_out.get("paths") or _to_ranked(recall_out["candidates"])
     rrf_fuse({"ranked_lists": ranked_lists}, fused, context, tenant, metrics, evolution)
+    rerank({"query": input["query"], "fused": fused.get("fused", [])},
+           fused, context, tenant, metrics, evolution)  # 精排（最佳路径组件，未配置=RRF 直出）
     order = [item["memory_id"] for item in fused.get("fused", [])]
     by_id = {c["memory_id"]: c for c in recall_out["candidates"]}
     ranked = [_decorate(by_id[i], fused) for i in order if i in by_id]

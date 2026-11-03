@@ -12,10 +12,13 @@ class _FakeProvider:
     """测试替身：返回结构化原子的强模型网关（ADR-006 唯一路径的测试注入点）。"""
 
     def complete(self, request: dict) -> dict:
+        if request.get("task") == "nli":  # NLI 裁判替身：默认 entail（矛盾语义由评测黄金集覆盖）
+            return {"text": '{"verdict": "entail", "confidence": 0.95}', "tokens": 5,
+                    "provider": "fake"}
         atoms = [{"text": line, "subject": "user", "predicate": "mentioned",
                   "quote": line, "entry_type": "fact"}
                  for line in request.get("prompt", "").split("\n") if line.strip()]
-        return {"atoms": atoms, "provider": "fake"}
+        return {"atoms": atoms, "tokens": 20, "provider": "fake"}
 
 
 class TestBootstrapEndToEnd(unittest.TestCase):

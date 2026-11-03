@@ -1,10 +1,11 @@
 {
-  "generated_at": "2026-11-04T00:12:16+0800",
+  "generated_at": "2026-11-04T00:26:18+0800",
   "profile": "lite",
   "golden": {
     "suite": "golden_route",
     "total": 63,
     "hit": 63,
+    "faithfulness_proxy": 0.746,
     "route_accuracy": 1.0,
     "per_route": {
       "extract": {
@@ -62,7 +63,7 @@
     "answered": 32,
     "no_answer": 8,
     "recall_at5": 0.9062,
-    "mrr": 0.9062,
+    "mrr": 0.8906,
     "no_answer_accuracy": 1.0,
     "seed_ingest_ok": 32,
     "storage_completeness_note": "写侧指标（原文层覆盖率）独立于本召回率报告（R3 双指标）",

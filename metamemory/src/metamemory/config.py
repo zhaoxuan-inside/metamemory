@@ -62,6 +62,7 @@ class RecallConfig:
     token_budget: int = 2048              # express 组装预算
     rrf_k: int = 60                       # RRF 融合常数（技术词典）
     default_intent: str = "fact"          # 检索意图三分默认档（R5）
+    semantic_min_score: float = 0.5       # 语义路相关性地板（向量检索必返回 top-k，低于地板=无关，拒答语义）
 
 
 @dataclass

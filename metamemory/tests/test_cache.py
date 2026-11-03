@@ -16,7 +16,9 @@ class CountingProvider:
 
     def complete(self, request: dict) -> dict:
         self.calls += 1
-        return {"atoms": self.atoms, "provider": "counting"}
+        if request.get("task") == "nli":
+            return {"text": '{"verdict": "entail", "confidence": 0.95}', "tokens": 5, "provider": "counting"}
+        return {"atoms": self.atoms, "tokens": 20, "provider": "counting"}
 
 
 def _selected(text: str, worthiness: str = "high"):
@@ -41,8 +43,8 @@ class TestCallCache(unittest.TestCase):
         ok1, out1 = self._run_extract(ctx, tenant, m, evo, provider, text)
         ok2, out2 = self._run_extract(ctx, tenant, m, evo, provider, text)
         self.assertTrue(ok1 and ok2)
-        self.assertEqual(provider.calls, 1)  # 第二次命中缓存，不重复调用强模型
-        self.assertEqual(m.counters.get("llm_cache_hit"), 1)
+        self.assertEqual(provider.calls, 2)  # 首轮 extract×1 + NLI×1；重放双命中缓存零新增
+        self.assertEqual(m.counters.get("llm_cache_hit"), 2)  # 第二轮 extract+NLI 各命中一次
         self.assertEqual(out1["candidates"], out2["candidates"])
 
     def test_different_input_is_cache_miss(self):
@@ -51,7 +53,7 @@ class TestCallCache(unittest.TestCase):
         ctx, tenant, m, evo = stubs(deps={"inference": provider, "call_cache": CallCache()})
         self._run_extract(ctx, tenant, m, evo, provider, "内容一")
         self._run_extract(ctx, tenant, m, evo, provider, "内容二")
-        self.assertEqual(provider.calls, 2)
+        self.assertEqual(provider.calls, 2)  # 异构输入 miss：extract×2；quote 不在原文 → 无锚点 → NLI 不调用
         self.assertIsNone(m.counters.get("llm_cache_hit"))
 
     def test_cache_key_includes_prompt_version(self):
